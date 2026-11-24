@@ -1,0 +1,2407 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CISA Exam Studio — ISACA Practice &amp; Multi-PDF Bank</title>
+
+  <!-- Google Fonts: Inter & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            canvas: '#090d16',
+          }
+        }
+      }
+    };
+  </script>
+
+  <!-- PDF.js CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+
+  <style>
+    :root {
+      --bg-canvas: #090d16;
+      --glass-bg: rgba(17, 24, 39, 0.72);
+      --glass-bg-elevated: rgba(23, 32, 51, 0.84);
+      --glass-border: rgba(148, 163, 184, 0.14);
+      --glass-border-hover: rgba(34, 211, 238, 0.35);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      background-color: var(--bg-canvas);
+      color: #f1f5f9;
+      font-family: 'Inter', system-ui, sans-serif;
+      overflow-x: hidden;
+      min-height: 100vh;
+    }
+
+    /* Ambient deep-slate radial lighting */
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      background:
+        radial-gradient(circle at 12% 10%, rgba(34, 211, 238, 0.08), transparent 36%),
+        radial-gradient(circle at 88% 15%, rgba(99, 102, 241, 0.09), transparent 40%),
+        radial-gradient(circle at 50% 92%, rgba(16, 185, 129, 0.05), transparent 42%);
+    }
+
+    .glass-card {
+      background: var(--glass-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--glass-border);
+      box-shadow: 0 12px 36px -8px rgba(0, 0, 0, 0.55);
+    }
+
+    .glass-elevated {
+      background: var(--glass-bg-elevated);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(148, 163, 184, 0.18);
+    }
+
+    .option-btn {
+      background: rgba(15, 23, 42, 0.68);
+      border: 1px solid rgba(148, 163, 184, 0.16);
+      transition: all 0.16s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .option-btn:hover:not(:disabled) {
+      border-color: rgba(34, 211, 238, 0.45);
+      background: rgba(30, 41, 59, 0.85);
+      transform: translateY(-1px);
+    }
+
+    .option-selected {
+      border-color: rgba(34, 211, 238, 0.85) !important;
+      background: rgba(34, 211, 238, 0.12) !important;
+      box-shadow: 0 0 0 1px rgba(34, 211, 238, 0.35);
+    }
+
+    .option-correct {
+      border-color: rgba(52, 211, 153, 0.85) !important;
+      background: rgba(16, 185, 129, 0.14) !important;
+      box-shadow: 0 0 0 1px rgba(52, 211, 153, 0.35);
+    }
+
+    .option-wrong {
+      border-color: rgba(251, 113, 133, 0.85) !important;
+      background: rgba(244, 63, 94, 0.14) !important;
+      box-shadow: 0 0 0 1px rgba(251, 113, 133, 0.35);
+    }
+
+    .qualifier-pill {
+      display: inline-block;
+      padding: 0 0.35rem;
+      margin: 0 0.05rem;
+      border-radius: 0.375rem;
+      background: rgba(251, 191, 36, 0.18);
+      border: 1px solid rgba(251, 191, 36, 0.48);
+      color: #fde68a;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+
+    /* Custom subtle scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(15, 23, 42, 0.5);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(148, 163, 184, 0.25);
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(34, 211, 238, 0.45);
+    }
+
+    @keyframes fadeSlideUp {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-up {
+      animation: fadeSlideUp 0.24s ease-out forwards;
+    }
+  </style>
+</head>
+<body class="relative antialiased selection:bg-cyan-500/30 selection:text-cyan-100">
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none px-4 sm:px-0"></div>
+
+  <!-- Top Navigation Header -->
+  <header class="sticky top-0 z-30 glass-card border-x-0 border-t-0">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3.5 flex flex-wrap items-center justify-between gap-3">
+      <!-- Brand Identity -->
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-400/20 via-indigo-500/20 to-emerald-400/20 border border-cyan-400/30 flex items-center justify-center shadow-inner">
+          <svg class="w-5 h-5 text-cyan-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+          </svg>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-base sm:text-lg font-extrabold tracking-tight text-white">CISA Exam Studio</h1>
+            <span class="hidden sm:inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-mono font-semibold bg-indigo-500/15 text-indigo-300 border border-indigo-400/25">
+              ISACA 5-DOMAIN
+            </span>
+          </div>
+          <p class="text-xs text-slate-400 hidden sm:block">Certified Information Systems Auditor • Adaptive Exam &amp; Multi-PDF Bank</p>
+        </div>
+      </div>
+
+      <!-- Live Question Bank Counter Pill & Bank Manager Toggle -->
+      <div class="flex items-center gap-2.5 sm:gap-3 flex-wrap">
+        <div id="bank-counter-pill" class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900/90 border border-slate-700/70 text-xs font-mono">
+          <span class="flex items-center gap-1.5 text-cyan-300 font-semibold">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span id="total-bank-count">30</span> Qs
+          </span>
+          <span class="text-slate-600">|</span>
+          <div class="hidden md:flex items-center gap-1.5 text-[11px] text-slate-300">
+            <span title="Domain 1: IS Auditing Process" class="px-1.5 py-0.5 rounded bg-cyan-500/10 text-cyan-300 border border-cyan-500/20">D1:<b id="d1-count">6</b></span>
+            <span title="Domain 2: Governance & Management of IT" class="px-1.5 py-0.5 rounded bg-indigo-500/10 text-indigo-300 border border-indigo-500/20">D2:<b id="d2-count">6</b></span>
+            <span title="Domain 3: IS Acquisition, Development & Implementation" class="px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-300 border border-amber-500/20">D3:<b id="d3-count">6</b></span>
+            <span title="Domain 4: IS Operations & Business Resilience" class="px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">D4:<b id="d4-count">6</b></span>
+            <span title="Domain 5: Protection of Information Assets" class="px-1.5 py-0.5 rounded bg-rose-500/10 text-rose-300 border border-rose-500/20">D5:<b id="d5-count">6</b></span>
+          </div>
+        </div>
+
+        <button id="open-importer-btn" type="button"
+          class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-gradient-to-r from-cyan-500 to-indigo-500 hover:from-cyan-400 hover:to-indigo-400 text-slate-950 shadow-lg shadow-cyan-500/20 transition cursor-pointer">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.233-2.33 3 3 0 013.758 3.848A3.752 3.752 0 0118 19.5H6.75z" />
+          </svg>
+          <span>Import PDFs / Manage Bank</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Workspace -->
+  <main class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+
+    <!-- VIEW 1: EXAM CONFIGURATION LOBBY -->
+    <section id="setup-view" class="animate-fade-up space-y-6">
+      <!-- Hero Banner -->
+      <div class="glass-card rounded-2xl p-6 sm:p-8 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+        <div class="space-y-2.5 max-w-2xl">
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono bg-cyan-500/10 text-cyan-300 border border-cyan-400/25">
+            <span>2024/2026 ISACA CISA Blueprint</span>
+            <span>•</span>
+            <span>Passing Scaled Score: 450 / 800</span>
+          </div>
+          <h2 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+            Master the IS Auditor Mindset
+          </h2>
+          <p class="text-sm sm:text-base text-slate-300 leading-relaxed">
+            Practice with built-in high-yield ISACA questions or drag-and-drop your CISA PDF question dumps to auto-parse, deduplicate, and classify hundreds of questions into a persistent local bank.
+          </p>
+        </div>
+
+        <div class="flex flex-col sm:flex-row lg:flex-col gap-3 shrink-0">
+          <button id="quick-drop-cta" type="button"
+            class="px-4 py-3 rounded-xl glass-elevated hover:border-cyan-400/50 text-left flex items-center gap-3 transition cursor-pointer group">
+            <div class="w-10 h-10 rounded-lg bg-cyan-500/15 border border-cyan-400/30 flex items-center justify-center text-cyan-300 group-hover:scale-105 transition">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m3.75 9v6m3-3H9m1.5-12H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+              </svg>
+            </div>
+            <div>
+              <div class="text-sm font-bold text-white">Load CISA PDF Dumps</div>
+              <div class="text-xs text-slate-400">Batch drop 0–400+ PDF files in browser</div>
+            </div>
+          </button>
+        </div>
+      </div>
+
+      <!-- Domain Blueprint Overview Cards -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5" id="domain-cards-grid">
+        <!-- Populated by JS -->
+      </div>
+
+      <!-- Configuration Grid -->
+      <div class="glass-card rounded-2xl p-6 sm:p-7 space-y-6">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+          <div>
+            <h3 class="text-lg font-bold text-white">Configure Practice Session</h3>
+            <p class="text-xs text-slate-400">Customize domain weighting, source pool, exam simulation mode, and pace timer</p>
+          </div>
+          <span id="matching-pool-badge" class="px-3 py-1 rounded-full text-xs font-mono bg-emerald-500/15 text-emerald-300 border border-emerald-400/25">
+            30 matching questions
+          </span>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+          <!-- Domain Filter -->
+          <div class="space-y-2">
+            <label for="cfg-domain" class="block text-xs font-semibold uppercase tracking-wider text-slate-400">Target Domain</label>
+            <select id="cfg-domain" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900/90 border border-slate-700/80 text-sm text-white focus:outline-none focus:border-cyan-400">
+              <option value="all">All Domains — Exam Weighted (18/18/12/26/26%)</option>
+              <option value="1">Domain 1 — IS Auditing Process (18%)</option>
+              <option value="2">Domain 2 — Governance &amp; Mgmt of IT (18%)</option>
+              <option value="3">Domain 3 — IS Acquisition &amp; Dev (12%)</option>
+              <option value="4">Domain 4 — IS Ops &amp; Resilience (26%)</option>
+              <option value="5">Domain 5 — Protection of Info Assets (26%)</option>
+            </select>
+          </div>
+
+          <!-- Source Filter -->
+          <div class="space-y-2">
+            <label for="cfg-source" class="block text-xs font-semibold uppercase tracking-wider text-slate-400">Question Source</label>
+            <select id="cfg-source" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900/90 border border-slate-700/80 text-sm text-white focus:outline-none focus:border-cyan-400">
+              <option value="all">All Questions (Starter + Imported)</option>
+              <option value="imported">Imported PDFs / Custom Only</option>
+              <option value="starter">Built-In Starter Bank Only (30)</option>
+            </select>
+          </div>
+
+          <!-- Session Length -->
+          <div class="space-y-2">
+            <label for="cfg-length" class="block text-xs font-semibold uppercase tracking-wider text-slate-400">Session Length</label>
+            <select id="cfg-length" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900/90 border border-slate-700/80 text-sm text-white focus:outline-none focus:border-cyan-400">
+              <option value="10">10 Questions (Quick Drill)</option>
+              <option value="25" selected>25 Questions (Standard Set)</option>
+              <option value="50">50 Questions (Deep Practice)</option>
+              <option value="100">100 Questions (Endurance Run)</option>
+              <option value="150">150 Questions (Full CISA Exam)</option>
+              <option value="all">All Available Matching Questions</option>
+            </select>
+          </div>
+
+          <!-- Delivery Mode -->
+          <div class="space-y-2">
+            <label for="cfg-mode" class="block text-xs font-semibold uppercase tracking-wider text-slate-400">Feedback Mode</label>
+            <select id="cfg-mode" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900/90 border border-slate-700/80 text-sm text-white focus:outline-none focus:border-cyan-400">
+              <option value="study">Study Mode — Instant Feedback</option>
+              <option value="exam">Exam Simulation — Blind Until Submit</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Toggles Row -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-1">
+          <label class="flex items-center justify-between p-3.5 rounded-xl bg-slate-900/70 border border-slate-800 hover:border-slate-700 cursor-pointer">
+            <div>
+              <div class="text-sm font-semibold text-white">Shuffle Answer Options</div>
+              <div class="text-xs text-slate-400">Randomize A–D order to prevent memorization</div>
+            </div>
+            <input id="cfg-shuffle-opts" type="checkbox" checked class="w-4 h-4 accent-cyan-400 rounded cursor-pointer" />
+          </label>
+
+          <label class="flex items-center justify-between p-3.5 rounded-xl bg-slate-900/70 border border-slate-800 hover:border-slate-700 cursor-pointer">
+            <div>
+              <div class="text-sm font-semibold text-white">Highlight Exam Qualifiers</div>
+              <div class="text-xs text-slate-400">Spotlight FIRST, BEST, MOST, GREATEST, LEAST</div>
+            </div>
+            <input id="cfg-highlight" type="checkbox" checked class="w-4 h-4 accent-amber-400 rounded cursor-pointer" />
+          </label>
+
+          <label class="flex items-center justify-between p-3.5 rounded-xl bg-slate-900/70 border border-slate-800 hover:border-slate-700 cursor-pointer">
+            <div>
+              <div class="text-sm font-semibold text-white">96s / Question Pace Timer</div>
+              <div class="text-xs text-slate-400">Official 4-hr / 150-Q ISACA exam cadence</div>
+            </div>
+            <input id="cfg-timer" type="checkbox" class="w-4 h-4 accent-indigo-400 rounded cursor-pointer" />
+          </label>
+        </div>
+
+        <!-- Start Button -->
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2 border-t border-slate-800/80">
+          <div class="text-xs text-slate-400 font-mono">
+            Shortcuts: <span class="text-slate-200">[A–D / 1–4]</span> Answer • <span class="text-slate-200">[← / →]</span> Navigate • <span class="text-slate-200">[F]</span> Flag • <span class="text-slate-200">[H]</span> Qualifiers
+          </div>
+          <button id="start-quiz-btn" type="button"
+            class="w-full sm:w-auto px-7 py-3.5 rounded-xl font-bold text-sm bg-gradient-to-r from-cyan-400 via-sky-400 to-indigo-500 hover:from-cyan-300 hover:to-indigo-400 text-slate-950 shadow-lg shadow-cyan-500/25 transition cursor-pointer flex items-center justify-center gap-2">
+            <span>Launch CISA Practice Session</span>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 2: ACTIVE QUIZ ENGINE -->
+    <section id="quiz-view" class="hidden animate-fade-up space-y-5">
+      <!-- Top Session Telemetry Bar -->
+      <div class="glass-card rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center gap-3 flex-wrap">
+          <button id="quit-session-btn" type="button"
+            class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800/90 hover:bg-slate-700 text-slate-300 border border-slate-700 transition cursor-pointer">
+            ← Exit to Setup
+          </button>
+          <span id="quiz-mode-badge" class="px-2.5 py-1 rounded-lg text-xs font-mono font-semibold bg-cyan-500/15 text-cyan-300 border border-cyan-400/25">
+            STUDY MODE
+          </span>
+          <span class="text-xs sm:text-sm font-mono text-slate-300">
+            Question <strong id="q-current-num" class="text-white">1</strong> of <strong id="q-total-num" class="text-white">25</strong>
+          </span>
+        </div>
+
+        <div class="flex items-center gap-3 flex-wrap">
+          <!-- Optional Pace Timer -->
+          <div id="timer-box" class="hidden items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-900/90 border border-amber-400/30 font-mono text-xs text-amber-300">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span id="timer-display">00:00</span>
+          </div>
+
+          <button id="toggle-highlight-live" type="button"
+            class="px-2.5 py-1.5 rounded-lg text-xs font-mono bg-amber-500/15 text-amber-200 border border-amber-400/30 hover:bg-amber-500/25 transition cursor-pointer"
+            title="Toggle Qualifier Highlights (H)">
+            Qualifiers: ON
+          </button>
+
+          <button id="finish-exam-btn" type="button"
+            class="px-3.5 py-1.5 rounded-lg text-xs font-bold bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition cursor-pointer">
+            Submit &amp; Score
+          </button>
+        </div>
+      </div>
+
+      <!-- Progress Bar -->
+      <div class="w-full h-2 rounded-full bg-slate-900/90 overflow-hidden border border-slate-800">
+        <div id="quiz-progress-bar" class="h-full bg-gradient-to-r from-cyan-400 to-indigo-500 transition-all duration-300" style="width: 4%"></div>
+      </div>
+
+      <!-- Main Question + Navigator Layout -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        <!-- Left 8 Cols: Question Card -->
+        <div class="lg:col-span-8 glass-card rounded-2xl p-5 sm:p-7 space-y-6">
+          <!-- Domain & Source Metadata + Flag Button -->
+          <div class="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-800/90">
+            <div class="flex items-center gap-2 flex-wrap">
+              <span id="q-domain-badge" class="px-2.5 py-1 rounded-lg text-xs font-mono font-semibold bg-indigo-500/15 text-indigo-300 border border-indigo-400/25">
+                Domain 1 • IS Auditing Process
+              </span>
+              <span id="q-source-badge" class="px-2 py-0.5 rounded text-[11px] font-mono bg-slate-800 text-slate-400 border border-slate-700">
+                Starter Bank
+              </span>
+            </div>
+
+            <button id="flag-question-btn" type="button"
+              class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-900/90 border border-slate-700 text-slate-300 hover:border-amber-400/50 transition cursor-pointer">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 3v1.5M3 21v-6m0 0l2.77-.693a9 9 0 016.208.682l.108.054a9 9 0 006.086.71l3.114-.732a48.524 48.524 0 01-.005-10.499l-3.11.732a9 9 0 01-6.085-.711l-.108-.054a9 9 0 00-6.208-.682L3 4.5M3 15V4.5" />
+              </svg>
+              <span id="flag-btn-label">Flag for Review</span>
+            </button>
+          </div>
+
+          <!-- Question Stem -->
+          <div id="q-stem" class="text-base sm:text-lg font-medium text-slate-100 leading-relaxed"></div>
+
+          <!-- Options List -->
+          <div id="q-options" class="space-y-3"></div>
+
+          <!-- Study Mode Instant Rationale Panel -->
+          <div id="q-explanation-box" class="hidden rounded-xl p-4 sm:p-5 bg-slate-900/90 border border-cyan-500/30 space-y-2">
+            <div class="flex items-center gap-2 text-xs font-mono font-bold uppercase tracking-wider text-cyan-300">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 001.5-.189m-1.5.189a6.01 6.01 0 01-1.5-.189m3.75 7.478a12.06 12.06 0 01-4.5 0m3.75 2.383a14.406 14.406 0 01-3 0M14.25 18v-.192c0-.983.658-1.823 1.508-2.316a7.5 7.5 0 10-7.517 0c.85.493 1.509 1.333 1.509 2.316V18" />
+              </svg>
+              <span>ISACA Auditor Rationale</span>
+            </div>
+            <p id="q-explanation-text" class="text-sm text-slate-300 leading-relaxed"></p>
+          </div>
+
+          <!-- Bottom Navigation Controls -->
+          <div class="flex items-center justify-between pt-4 border-t border-slate-800">
+            <button id="prev-q-btn" type="button"
+              class="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold bg-slate-800/90 hover:bg-slate-700 disabled:opacity-40 text-white border border-slate-700 transition cursor-pointer">
+              ← Previous
+            </button>
+
+            <span id="answered-status-text" class="text-xs font-mono text-slate-400">0 / 25 Answered</span>
+
+            <button id="next-q-btn" type="button"
+              class="px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-cyan-500 hover:bg-cyan-400 text-slate-950 transition cursor-pointer">
+              Next →
+            </button>
+          </div>
+        </div>
+
+        <!-- Right 4 Cols: Question Navigator Palette -->
+        <aside class="lg:col-span-4 glass-card rounded-2xl p-5 space-y-4">
+          <div class="flex items-center justify-between">
+            <h3 class="text-sm font-bold text-white">Question Navigator</h3>
+            <span class="text-xs font-mono text-slate-400" id="flagged-count-label">0 Flagged</span>
+          </div>
+
+          <div class="flex flex-wrap gap-3 text-[11px] text-slate-400 font-mono">
+            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-sm bg-cyan-400 inline-block"></span> Current</span>
+            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-sm bg-indigo-500/50 border border-indigo-400 inline-block"></span> Answered</span>
+            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-sm bg-amber-400 inline-block"></span> Flagged</span>
+          </div>
+
+          <div id="question-nav-grid" class="grid grid-cols-5 sm:grid-cols-8 lg:grid-cols-5 gap-2 max-h-80 overflow-y-auto pr-1"></div>
+        </aside>
+      </div>
+    </section>
+
+    <!-- VIEW 3: ANALYTICS & SCALED SCORE REPORT -->
+    <section id="results-view" class="hidden animate-fade-up space-y-6">
+      <!-- Top Score Summary Card -->
+      <div class="glass-card rounded-2xl p-6 sm:p-8 grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+        <div class="lg:col-span-7 space-y-3">
+          <div class="flex items-center gap-2.5 flex-wrap">
+            <span id="result-pass-badge" class="px-3 py-1 rounded-full text-xs font-mono font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-400/40">
+              PASSING STANDARD MET (≥ 450)
+            </span>
+            <span id="result-time-taken" class="text-xs font-mono text-slate-400"></span>
+          </div>
+          <h2 class="text-2xl sm:text-3xl font-extrabold text-white">Exam Readiness &amp; Domain Diagnostic</h2>
+          <p class="text-sm text-slate-300 leading-relaxed">
+            ISACA scores the CISA exam on a <strong class="text-white">200–800 scaled score</strong> with <strong class="text-cyan-300">450</strong> required to pass. Review your domain-weighted mastery below and export a custom study guide of missed and flagged items.
+          </p>
+
+          <!-- Action Buttons -->
+          <div class="flex flex-wrap gap-3 pt-2">
+            <button id="retake-missed-btn" type="button"
+              class="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-rose-500/20 hover:bg-rose-500/30 text-rose-200 border border-rose-400/40 transition cursor-pointer">
+              Retake Missed Questions (<span id="missed-btn-count">0</span>)
+            </button>
+            <button id="download-guide-btn" type="button"
+              class="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-cyan-500 hover:bg-cyan-400 text-slate-950 transition cursor-pointer">
+              Download Missed &amp; Flagged Study Guide (.txt)
+            </button>
+            <button id="new-session-btn" type="button"
+              class="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 transition cursor-pointer">
+              Configure New Session
+            </button>
+          </div>
+        </div>
+
+        <!-- Scaled Score Gauge Box -->
+        <div class="lg:col-span-5 glass-elevated rounded-2xl p-6 text-center space-y-2 border border-cyan-400/25">
+          <div class="text-xs font-mono uppercase tracking-wider text-slate-400">Estimated ISACA Scaled Score</div>
+          <div id="scaled-score-value" class="text-5xl sm:text-6xl font-extrabold font-mono text-cyan-300">620</div>
+          <div class="text-xs font-mono text-slate-400">
+            Raw Accuracy: <strong id="raw-score-text" class="text-white">18 / 25 (72%)</strong>
+          </div>
+          <div class="w-full h-3 rounded-full bg-slate-900 overflow-hidden relative mt-3 border border-slate-700">
+            <!-- 450 passing marker at (450-200)/600 = 41.67% -->
+            <div class="absolute top-0 bottom-0 w-0.5 bg-amber-400 z-10" style="left: 41.67%" title="450 Passing Mark"></div>
+            <div id="scaled-score-bar" class="h-full bg-gradient-to-r from-rose-400 via-amber-400 to-emerald-400 transition-all duration-500" style="width: 70%"></div>
+          </div>
+          <div class="flex justify-between text-[10px] font-mono text-slate-500 pt-0.5">
+            <span>200</span>
+            <span class="text-amber-300">450 Pass</span>
+            <span>800</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Domain Mastery Bars -->
+      <div class="glass-card rounded-2xl p-6 space-y-4">
+        <h3 class="text-base font-bold text-white">Domain-by-Domain Performance Breakdown</h3>
+        <div id="domain-results-list" class="space-y-4"></div>
+      </div>
+
+      <!-- Detailed Item Review -->
+      <div class="glass-card rounded-2xl p-6 space-y-5">
+        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-4">
+          <h3 class="text-base font-bold text-white">Question-by-Question Review</h3>
+          <div class="flex items-center gap-2">
+            <button data-review-filter="all" type="button" class="review-filter-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-cyan-500/20 text-cyan-300 border border-cyan-400/40 cursor-pointer">All</button>
+            <button data-review-filter="missed" type="button" class="review-filter-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300 border border-slate-700 cursor-pointer">Missed Only</button>
+            <button data-review-filter="flagged" type="button" class="review-filter-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300 border border-slate-700 cursor-pointer">Flagged Only</button>
+          </div>
+        </div>
+        <div id="detailed-review-list" class="space-y-4"></div>
+      </div>
+    </section>
+  </main>
+
+  <!-- MULTI-PDF & TEXT QUESTION BANK IMPORTER MODAL -->
+  <div id="importer-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-3 sm:p-6 bg-slate-950/80 backdrop-blur-md">
+    <div class="glass-elevated rounded-2xl max-w-4xl w-full max-h-[92vh] flex flex-col overflow-hidden shadow-2xl border border-slate-700/80">
+      <!-- Modal Header -->
+      <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between gap-4">
+        <div>
+          <h2 class="text-lg font-extrabold text-white">Multi-PDF &amp; Text Question Bank Importer</h2>
+          <p class="text-xs text-slate-400">Client-side PDF.js parser • Dual-format CISA extraction • Auto-deduplicated in localStorage</p>
+        </div>
+        <button id="close-importer-btn" type="button" class="p-2 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 cursor-pointer">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Modal Tabs -->
+      <div class="px-6 pt-3 border-b border-slate-800 flex items-center gap-2 bg-slate-900/40">
+        <button id="tab-pdf-upload" type="button" class="px-4 py-2.5 text-xs sm:text-sm font-bold border-b-2 border-cyan-400 text-cyan-300 cursor-pointer">
+          1. Batch Upload PDFs / Files
+        </button>
+        <button id="tab-raw-paste" type="button" class="px-4 py-2.5 text-xs sm:text-sm font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-200 cursor-pointer">
+          2. Paste Raw Text / JSON
+        </button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="p-6 overflow-y-auto space-y-5 flex-1">
+        <!-- Tab 1: PDF / File Drag & Drop -->
+        <div id="panel-pdf-upload" class="space-y-4">
+          <div id="drop-zone"
+            class="border-2 border-dashed border-slate-700 hover:border-cyan-400/70 rounded-2xl p-8 text-center bg-slate-900/50 transition cursor-pointer space-y-3">
+            <div class="w-12 h-12 rounded-2xl bg-cyan-500/15 border border-cyan-400/30 flex items-center justify-center mx-auto text-cyan-300">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+              </svg>
+            </div>
+            <div>
+              <p class="text-sm sm:text-base font-bold text-white">Drag &amp; drop multiple CISA PDF files here, or click to browse</p>
+              <p class="text-xs text-slate-400 mt-1">Supports batch selection (e.g., <span class="font-mono text-slate-300">0 to 100 CISA dumps.pdf</span>, <span class="font-mono text-slate-300">100 to 200 CISA dumps.pdf</span>, <span class="font-mono text-slate-300">.txt</span>, <span class="font-mono text-slate-300">.json</span>)</p>
+            </div>
+            <input id="file-input" type="file" multiple accept=".pdf,.txt,.json" class="hidden" />
+          </div>
+
+          <!-- Extraction Progress Bar -->
+          <div id="import-progress-box" class="hidden rounded-xl p-4 bg-slate-900/90 border border-slate-800 space-y-2.5">
+            <div class="flex items-center justify-between text-xs font-mono">
+              <span id="import-status-label" class="text-cyan-300">Reading PDFs...</span>
+              <span id="import-count-label" class="text-emerald-300 font-bold">0 parsed</span>
+            </div>
+            <div class="w-full h-2.5 rounded-full bg-slate-950 overflow-hidden border border-slate-800">
+              <div id="import-progress-bar" class="h-full bg-gradient-to-r from-cyan-400 via-indigo-400 to-emerald-400 transition-all duration-200" style="width: 0%"></div>
+            </div>
+            <div id="import-file-log" class="text-[11px] font-mono text-slate-400 max-h-28 overflow-y-auto space-y-1 pt-1"></div>
+          </div>
+        </div>
+
+        <!-- Tab 2: Paste Raw Text or JSON -->
+        <div id="panel-raw-paste" class="hidden space-y-3">
+          <p class="text-xs text-slate-400">
+            Paste raw text copied from any CISA PDF/document (both <span class="font-mono text-slate-200">Correct Answer: A</span> and inline <span class="font-mono text-slate-200">(Correct Answer)</span> formats supported) or paste a JSON question array.
+          </p>
+          <textarea id="raw-paste-input" rows="8"
+            placeholder="QUESTION 1&#10;Which of the following is the PRIMARY purpose of an IS audit charter?&#10;A) Define detailed audit procedures&#10;B) Establish the authority and responsibility of the audit function&#10;C) Document daily operational logs&#10;D) Approve IT budgets&#10;Correct Answer: B&#10;Explanation: The audit charter formally defines the purpose, authority, and responsibility of the IS audit function."
+            class="w-full rounded-xl p-3.5 bg-slate-950/90 border border-slate-700 text-xs font-mono text-slate-200 focus:outline-none focus:border-cyan-400"></textarea>
+          <div class="flex justify-end">
+            <button id="parse-paste-btn" type="button"
+              class="px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-cyan-500 hover:bg-cyan-400 text-slate-950 transition cursor-pointer">
+              Parse &amp; Add to Question Bank
+            </button>
+          </div>
+        </div>
+
+        <!-- Current Bank Summary & Management Controls -->
+        <div class="rounded-xl p-4 bg-slate-900/75 border border-slate-800 space-y-3">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <div class="text-xs font-bold uppercase tracking-wider text-slate-300">Persistent Question Bank Inventory</div>
+              <div class="text-xs text-slate-400 mt-0.5">
+                Starter Bank: <strong id="modal-starter-count" class="text-white">30</strong> • Imported Custom: <strong id="modal-imported-count" class="text-cyan-300">0</strong> • Total Active: <strong id="modal-total-count" class="text-emerald-300">30</strong>
+              </div>
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+              <button id="export-bank-btn" type="button"
+                class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-cyan-300 border border-slate-700 transition cursor-pointer">
+                Export Full Bank (.json)
+              </button>
+              <button id="clear-imported-btn" type="button"
+                class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 border border-rose-400/30 transition cursor-pointer">
+                Clear Imported Questions
+              </button>
+            </div>
+          </div>
+
+          <!-- Two-step inline clear confirmation banner (never uses window.confirm) -->
+          <div id="clear-confirm-banner" class="hidden rounded-lg p-3 bg-rose-950/60 border border-rose-500/40 flex flex-wrap items-center justify-between gap-2">
+            <span class="text-xs text-rose-200">Remove all imported questions from localStorage? (The 30 built-in starter questions remain intact.)</span>
+            <div class="flex items-center gap-2">
+              <button id="confirm-clear-yes" type="button" class="px-3 py-1 rounded bg-rose-500 hover:bg-rose-400 text-slate-950 text-xs font-bold cursor-pointer">Yes, Clear Imported</button>
+              <button id="confirm-clear-no" type="button" class="px-3 py-1 rounded bg-slate-800 text-slate-300 text-xs font-semibold cursor-pointer">Cancel</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Configure PDF.js Worker
+    if (window.pdfjsLib) {
+      window.pdfjsLib.GlobalWorkerOptions.workerSrc =
+        'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    }
+
+    // Official ISACA CISA 5-Domain Metadata & Blueprint Weights
+    const DOMAINS = {
+      1: { id: 1, short: 'D1', name: 'IS Auditing Process', weight: 0.18, pct: '18%', accent: 'cyan' },
+      2: { id: 2, short: 'D2', name: 'Governance & Management of IT', weight: 0.18, pct: '18%', accent: 'indigo' },
+      3: { id: 3, short: 'D3', name: 'IS Acquisition, Dev & Implementation', weight: 0.12, pct: '12%', accent: 'amber' },
+      4: { id: 4, short: 'D4', name: 'IS Operations & Business Resilience', weight: 0.26, pct: '26%', accent: 'emerald' },
+      5: { id: 5, short: 'D5', name: 'Protection of Information Assets', weight: 0.26, pct: '26%', accent: 'rose' }
+    };
+
+    const STORAGE_KEY = 'cisa_custom_bank_v1';
+
+    // 30 High-Yield Built-In ISACA CISA Questions (6 per Domain across Domains 1-5)
+    const STARTER_QUESTIONS = [
+      // --- DOMAIN 1: IS AUDITING PROCESS (6) ---
+      {
+        id: 'starter-d1-1',
+        domain: 1,
+        source: 'starter',
+        question: 'An IS auditor is asked to design and implement a new vendor risk scoring workflow for the procurement department. Six months later, the auditor is assigned to audit that exact workflow. What is the GREATEST concern with this assignment?',
+        options: [
+          'The auditor may lack sufficient technical knowledge of procurement software',
+          'Impairment of audit objectivity and independence',
+          'Increased detection risk due to familiarity with the control environment',
+          'Violation of the audit charter scope limitations'
+        ],
+        answer: 1,
+        explanation: 'Under ISACA IS Audit and Assurance Standards, auditing a control or workflow that the auditor personally designed or implemented impairs both actual and perceived objectivity and independence.'
+      },
+      {
+        id: 'starter-d1-2',
+        domain: 1,
+        source: 'starter',
+        question: 'Which document formally establishes the purpose, authority, and responsibility of the internal IS audit function within an enterprise?',
+        options: [
+          'The annual risk-based audit plan',
+          'The audit charter approved by the board or audit committee',
+          'The corporate information security policy',
+          'The audit engagement letter'
+        ],
+        answer: 1,
+        explanation: 'The IS audit charter is the overarching governance document approved by the board of directors or audit committee that grants the audit function its authority, scope, independence, and right of access.'
+      },
+      {
+        id: 'starter-d1-3',
+        domain: 1,
+        source: 'starter',
+        question: 'During risk-based audit planning, an IS auditor identifies a financial application with high inherent risk and weak internal controls. How should the auditor adjust detection risk and substantive testing?',
+        options: [
+          'Increase detection risk and decrease substantive testing',
+          'Decrease detection risk and increase substantive testing',
+          'Rely exclusively on compliance testing to reduce audit hours',
+          'Increase tolerable error rate to compensate for control weakness'
+        ],
+        answer: 1,
+        explanation: 'Audit Risk = Inherent Risk × Control Risk × Detection Risk. When inherent and control risks are high, the auditor must lower acceptable detection risk by expanding substantive testing to keep overall audit risk low.'
+      },
+      {
+        id: 'starter-d1-4',
+        domain: 1,
+        source: 'starter',
+        question: 'Which sampling method is BEST suited when an IS auditor is testing compliance with an access approval control and wants to estimate the rate of deviation in a population?',
+        options: [
+          'Monetary unit sampling',
+          'Attribute sampling',
+          'Stratified mean-per-unit sampling',
+          'Difference estimation'
+        ],
+        answer: 1,
+        explanation: 'Attribute sampling is used in compliance testing to measure the presence or absence of a specific control attribute (e.g., authorized sign-off) and estimate the rate of control deviation.'
+      },
+      {
+        id: 'starter-d1-5',
+        domain: 1,
+        source: 'starter',
+        question: 'An IS auditor obtains a third-party cloud provider’s SOC 2 Type 2 report covering January 1 to September 30, while the client’s fiscal year ends December 31. What should the auditor request FIRST to address the three-month gap?',
+        options: [
+          'A SOC 1 Type 1 report for the fourth quarter',
+          'A signed bridge letter from the service organization covering October 1 to December 31',
+          'Immediate on-site physical penetration testing of the cloud provider',
+          'A waiver of control testing signed by the client’s CIO'
+        ],
+        answer: 1,
+        explanation: 'A bridge letter (gap letter) provides management representation from the service organization that no material changes occurred in internal controls between the end of the SOC report period and the client’s year-end.'
+      },
+      {
+        id: 'starter-d1-6',
+        domain: 1,
+        source: 'starter',
+        question: 'During an exit conference at the conclusion of an IS audit, management strongly disagrees with a high-risk finding and refuses to commit to remediation. What should the IS auditor do NEXT?',
+        options: [
+          'Remove the finding from the final report until management agrees',
+          'Document management’s formal response alongside the finding and escalate to the audit committee',
+          'Suspend the audit and revoke system administrator privileges',
+          'Rewrite the finding as a low-risk observation to preserve working relationships'
+        ],
+        answer: 1,
+        explanation: 'Auditors must never suppress valid, evidence-backed findings. If management declines to remediate a high-risk exposure, the auditor includes the finding and management’s rationale in the final report and escalates to the audit committee.'
+      },
+
+      // --- DOMAIN 2: GOVERNANCE & MANAGEMENT OF IT (6) ---
+      {
+        id: 'starter-d2-1',
+        domain: 2,
+        source: 'starter',
+        question: 'In COBIT and ISACA governance frameworks, what is the CORE distinction between IT governance and IT management?',
+        options: [
+          'Governance focuses on daily technical operations, while management sets board risk appetite',
+          'Governance evaluates, directs, and monitors to achieve stakeholder value, while management plans, builds, runs, and monitors activities',
+          'Governance is executed by the CIO, while management is executed solely by external auditors',
+          'Governance applies only to regulatory compliance, while management applies to software engineering'
+        ],
+        answer: 1,
+        explanation: 'Under COBIT, Governance (EDM: Evaluate, Direct, Monitor) ensures stakeholder needs are evaluated and strategic direction is set, whereas Management (PBRM: Plan, Build, Run, Monitor) executes activities in alignment with that direction.'
+      },
+      {
+        id: 'starter-d2-2',
+        domain: 2,
+        source: 'starter',
+        question: 'In a small organization with only three IT staff members, strict segregation of duties (SoD) between system administration and security administration cannot be achieved. What is the BEST course of action for the IS auditor to recommend?',
+        options: [
+          'Accept the risk without controls because the team is small',
+          'Implement compensating controls such as independent supervisory review of privileged activity logs',
+          'Outsource all business operations to an external vendor',
+          'Disable audit logging to reduce administrative overhead'
+        ],
+        answer: 1,
+        explanation: 'When full segregation of duties is impractical due to staffing constraints, compensating controls—such as periodic independent review of immutable privileged activity logs and reconciliation reports—mitigate the risk of unauthorized actions.'
+      },
+      {
+        id: 'starter-d2-3',
+        domain: 2,
+        source: 'starter',
+        question: 'In data governance, what is the PRIMARY responsibility of a Data Owner compared to a Data Custodian?',
+        options: [
+          'The Data Owner runs daily database backups, while the Data Custodian approves user access requests',
+          'The Data Owner assigns data classification and approves access, while the Data Custodian implements technical safeguards and backups',
+          'The Data Owner writes SQL queries, while the Data Custodian defines corporate privacy regulations',
+          'The Data Owner audits database logs, while the Data Custodian owns business process risk'
+        ],
+        answer: 1,
+        explanation: 'Data Owners (typically senior business managers) are accountable for classifying data and authorizing access. Data Custodians (IT operations/DBAs) implement and maintain the technical controls prescribed by the owner.'
+      },
+      {
+        id: 'starter-d2-4',
+        domain: 2,
+        source: 'starter',
+        question: 'When an organization outsources a critical business process to a cloud service provider, which element CANNOT be transferred to the vendor?',
+        options: [
+          'Day-to-day server patching and hardware maintenance',
+          'Accountability for regulatory compliance and protection of customer data',
+          'Physical security monitoring of the data center perimeter',
+          'Network bandwidth capacity management'
+        ],
+        answer: 1,
+        explanation: 'While operational execution and certain risks can be shared or transferred contractually, ultimate legal and regulatory accountability for enterprise data and compliance always remains with the organization’s board and executive management.'
+      },
+      {
+        id: 'starter-d2-5',
+        domain: 2,
+        source: 'starter',
+        question: 'During an audit, an IS auditor discovers that the marketing department purchased and deployed a cloud CRM tool containing customer PII without IT or security approval. What is the BEST immediate recommendation?',
+        options: [
+          'Immediately delete the vendor’s cloud database without notifying marketing',
+          'Conduct a risk and compliance assessment of the shadow IT service and bring it under formal governance',
+          'Ignore the finding because marketing funded the subscription out of its own budget',
+          'Issue a disciplinary warning to the cloud vendor'
+        ],
+        answer: 1,
+        explanation: 'Shadow IT containing customer PII introduces regulatory, privacy, and security exposures. The auditor should recommend assessing the data flows, contractual terms, and security posture immediately to bring the asset under governance or migrate it safely.'
+      },
+      {
+        id: 'starter-d2-6',
+        domain: 2,
+        source: 'starter',
+        question: 'What is the PRIMARY purpose of an IT Steering Committee?',
+        options: [
+          'To configure firewall access control lists and review intrusion alerts',
+          'To align IT investments, project priorities, and resource allocation with enterprise business strategy',
+          'To perform unit and integration testing on new software releases',
+          'To replace the internal audit function in reviewing compliance'
+        ],
+        answer: 1,
+        explanation: 'An IT Steering Committee bridges executive business leadership and IT, ensuring major IT initiatives, budgets, and priorities align with strategic enterprise objectives.'
+      },
+
+      // --- DOMAIN 3: IS ACQUISITION, DEVELOPMENT & IMPLEMENTATION (6) ---
+      {
+        id: 'starter-d3-1',
+        domain: 3,
+        source: 'starter',
+        question: 'During which phase of the Software Development Life Cycle (SDLC) is it MOST cost-effective to identify and remediate missing security and audit controls?',
+        options: [
+          'User Acceptance Testing (UAT)',
+          'Requirements definition and design',
+          'Post-implementation review',
+          'Production maintenance and patching'
+        ],
+        answer: 1,
+        explanation: 'Embedding security and audit requirements during requirements definition and system design prevents expensive architectural rework later in testing or production.'
+      },
+      {
+        id: 'starter-d3-2',
+        domain: 3,
+        source: 'starter',
+        question: 'An organization is purchasing a mission-critical proprietary treasury system from a small startup vendor. Which contractual safeguard BEST protects the organization if the vendor goes bankrupt?',
+        options: [
+          'A software escrow agreement with periodic source code verification',
+          'A higher annual maintenance service level agreement (SLA)',
+          'Purchasing extended hardware warranties from the vendor',
+          'Requiring the vendor to use Agile development sprints'
+        ],
+        answer: 0,
+        explanation: 'A software escrow agreement deposits source code and build documentation with a neutral third party, releasing them to the client if the vendor ceases operations or fails to support the product.'
+      },
+      {
+        id: 'starter-d3-3',
+        domain: 3,
+        source: 'starter',
+        question: 'Which system cutover strategy carries the LOWEST risk of operational disruption to a critical payroll system, despite higher temporary operating costs?',
+        options: [
+          'Direct cutover (big bang)',
+          'Parallel cutover',
+          'Pilot cutover without rollback procedures',
+          'Phased cutover without data reconciliation'
+        ],
+        answer: 1,
+        explanation: 'Running the legacy and new systems in parallel allows outputs to be reconciled side-by-side and provides immediate fallback to the proven legacy system if defects arise.'
+      },
+      {
+        id: 'starter-d3-4',
+        domain: 3,
+        source: 'starter',
+        question: 'During data migration from a legacy mainframe database to a new cloud ERP system, what is the MOST reliable control to ensure no records were lost or altered in transit?',
+        options: [
+          'Visually inspecting a sample of 20 migrated customer records',
+          'Reconciling record counts, control totals, and financial balances between source and target systems',
+          'Relying on the ETL vendor’s completion status email',
+          'Running network bandwidth utilization tests during migration'
+        ],
+        answer: 1,
+        explanation: 'Automated reconciliation of 100% of record counts, hash totals, and financial balances between source and target databases proves completeness and accuracy across the entire migration.'
+      },
+      {
+        id: 'starter-d3-5',
+        domain: 3,
+        source: 'starter',
+        question: 'During an audit of change management, an IS auditor finds that an emergency patch was applied to production at 2:00 AM on a Sunday without prior Change Advisory Board (CAB) approval. What should the auditor verify FIRST?',
+        options: [
+          'Whether the developer had direct write access to production source repositories',
+          'Whether the emergency change followed documented emergency procedures and received formal retrospective CAB approval',
+          'Whether the patch reduced CPU utilization on the database server',
+          'Whether the Change Advisory Board meets daily'
+        ],
+        answer: 1,
+        explanation: 'Emergency changes often require rapid deployment outside normal CAB schedules, so proper change management requires logging the emergency ticket, obtaining emergency authorization, and performing formal post-implementation CAB review.'
+      },
+      {
+        id: 'starter-d3-6',
+        domain: 3,
+        source: 'starter',
+        question: 'Which testing type specifically verifies that recent code enhancements have not unintentionally broken existing functionality in other modules of an application?',
+        options: [
+          'Unit testing',
+          'Regression testing',
+          'Sociability testing',
+          'Penetration testing'
+        ],
+        answer: 1,
+        explanation: 'Regression testing re-executes previously passed test suites after code modifications to confirm that unchanged modules continue to operate properly.'
+      },
+
+      // --- DOMAIN 4: IS OPERATIONS & BUSINESS RESILIENCE (6) ---
+      {
+        id: 'starter-d4-1',
+        domain: 4,
+        source: 'starter',
+        question: 'A Business Impact Analysis establishes a Maximum Tolerable Downtime (MTD) of 8 hours and a Recovery Time Objective (RTO) of 5 hours for an order-fulfillment system. What is the maximum allowable Work Recovery Time (WRT) to restore business operations within the MTD?',
+        options: [
+          '13 hours',
+          '3 hours',
+          '5 hours',
+          '8 hours'
+        ],
+        answer: 1,
+        explanation: 'MTD = RTO + WRT. With an MTD of 8 hours and an IT infrastructure RTO of 5 hours, the business unit has at most 3 hours (WRT) to verify data, catch up on backlog, and resume full operations.'
+      },
+      {
+        id: 'starter-d4-2',
+        domain: 4,
+        source: 'starter',
+        question: 'A bank’s trading platform can tolerate a maximum of 15 minutes of lost transaction data during a catastrophic outage. Which metric defines this requirement?',
+        options: [
+          'Recovery Time Objective (RTO)',
+          'Recovery Point Objective (RPO)',
+          'Mean Time Between Failures (MTBF)',
+          'Service Delivery Objective (SDO)'
+        ],
+        answer: 1,
+        explanation: 'Recovery Point Objective (RPO) defines the maximum acceptable age of recovered data (i.e., maximum tolerable data loss window), dictating backup and replication frequency.'
+      },
+      {
+        id: 'starter-d4-3',
+        domain: 4,
+        source: 'starter',
+        question: 'Which disaster recovery test validates end-to-end recovery capability at an alternate facility without shutting down primary production operations, making it the MOST thorough non-disruptive test?',
+        options: [
+          'Paper / desk-check review',
+          'Structured walk-through',
+          'Parallel test',
+          'Full interruption test'
+        ],
+        answer: 2,
+        explanation: 'In a parallel test, recovery systems at the alternate site are brought online and process real or simulated workloads alongside the active primary site, validating full technical recovery without halting live business operations.'
+      },
+      {
+        id: 'starter-d4-4',
+        domain: 4,
+        source: 'starter',
+        question: 'A backup schedule runs a full backup every Sunday night and a differential backup every Monday through Saturday night. If a server crashes on Thursday morning, which backup sets are required for a complete restore?',
+        options: [
+          'Sunday’s full backup plus Monday, Tuesday, and Wednesday differential backups',
+          'Sunday’s full backup and Wednesday’s differential backup only',
+          'Wednesday’s differential backup only',
+          'Sunday’s full backup only'
+        ],
+        answer: 1,
+        explanation: 'Differential backups capture all changes since the last full backup. Therefore, restoring requires only the last full backup (Sunday) plus the single most recent differential backup (Wednesday).'
+      },
+      {
+        id: 'starter-d4-5',
+        domain: 4,
+        source: 'starter',
+        question: 'What is the PRIMARY security advantage of deploying Database Activity Monitoring (DAM) tools independently of native database audit logs?',
+        options: [
+          'DAM eliminates the need for database encryption at rest',
+          'DAM captures and alerts on privileged DBA actions even if a DBA disables native database logging',
+          'DAM automatically normalizes relational database schemas',
+          'DAM replaces network firewalls at the perimeter'
+        ],
+        answer: 1,
+        explanation: 'Independent DAM sensors inspect database protocol traffic outside the DBA’s administrative control, ensuring privileged database administrators cannot cover their tracks by tampering with native logs.'
+      },
+      {
+        id: 'starter-d4-6',
+        domain: 4,
+        source: 'starter',
+        question: 'During a disaster recovery audit, the IS auditor notices that the primary data center and the contracted hot site are located 12 miles apart on the same regional power grid and floodplain. What is the PRIMARY concern?',
+        options: [
+          'Network latency between the two sites will be too high for synchronous replication',
+          'A single regional disaster could incapacitate both the primary and recovery sites simultaneously',
+          'Staff travel time between the sites will be excessive',
+          'Hot sites are only suitable for non-critical batch systems'
+        ],
+        answer: 1,
+        explanation: 'Recovery sites must be geographically separated outside the same disaster footprint (power grid, flood zone, fault line) so a single regional event cannot knock out both primary and backup facilities.'
+      },
+
+      // --- DOMAIN 5: PROTECTION OF INFORMATION ASSETS (6) ---
+      {
+        id: 'starter-d5-1',
+        domain: 5,
+        source: 'starter',
+        question: 'In Public Key Infrastructure (PKI), how does a sender create a digital signature that proves message integrity, authenticity, and non-repudiation?',
+        options: [
+          'Encrypt the entire message with the recipient’s public key',
+          'Hash the message and encrypt the resulting digest with the sender’s private key',
+          'Hash the message and encrypt the resulting digest with the sender’s public key',
+          'Encrypt the message with a shared symmetric session key'
+        ],
+        answer: 1,
+        explanation: 'A digital signature is formed by computing a cryptographic hash (digest) of the message and encrypting that digest with the sender’s private key. Anyone with the sender’s public key can verify the signature, proving origin and integrity.'
+      },
+      {
+        id: 'starter-d5-2',
+        domain: 5,
+        source: 'starter',
+        question: 'When evaluating a biometric access control system for a high-security data center, which metric represents the point where the False Acceptance Rate (FAR) equals the False Rejection Rate (FRR)?',
+        options: [
+          'Recovery Point Objective (RPO)',
+          'Crossover Error Rate (CER) / Equal Error Rate (EER)',
+          'Mean Time Between Failures (MTBF)',
+          'Annualized Rate of Occurrence (ARO)'
+        ],
+        answer: 1,
+        explanation: 'The Crossover Error Rate (CER), also known as Equal Error Rate (EER), is the sensitivity threshold where FAR equals FRR. Lower CER values indicate a more accurate biometric system.'
+      },
+      {
+        id: 'starter-d5-3',
+        domain: 5,
+        source: 'starter',
+        question: 'What is the PRIMARY security risk of enabling "split tunneling" on corporate remote-access VPN clients?',
+        options: [
+          'It doubles the bandwidth consumed on the corporate headquarters internet circuit',
+          'An attacker on the user’s local untrusted network could bridge traffic into the corporate network, bypassing corporate perimeter inspection',
+          'It prevents users from accessing local printers on their home network',
+          'It disables TLS encryption for corporate intranet applications'
+        ],
+        answer: 1,
+        explanation: 'Split tunneling allows a remote device to connect simultaneously to the open internet and the corporate VPN, creating a potential bridge for external attackers to pivot into the internal network without passing through corporate firewalls/IDS.'
+      },
+      {
+        id: 'starter-d5-4',
+        domain: 5,
+        source: 'starter',
+        question: 'Which physical security control specifically prevents tailgating (piggybacking) into a restricted server room?',
+        options: [
+          'Closed-circuit television (CCTV) cameras in the hallway',
+          'An interlocking dual-door mantrap (access control vestibule) with weight or optical sensors',
+          'A visitor sign-in logbook at the lobby reception desk',
+          'Cipher keypad locks on the outer corridor door'
+        ],
+        answer: 1,
+        explanation: 'A mantrap enforces single-person entry by locking the first door before unlocking the second door, using optical or weight sensors to prevent unauthorized individuals from following an authorized employee inside.'
+      },
+      {
+        id: 'starter-d5-5',
+        domain: 5,
+        source: 'starter',
+        question: 'During a cyber incident response, an analyst discovers an active ransomware process encrypting files on a critical file server. According to the standard incident response lifecycle, what should the team do FIRST after confirming the infection?',
+        options: [
+          'Immediately reboot the server to clear malicious processes from RAM',
+          'Contain the incident by isolating the affected host from the network while preserving volatile memory',
+          'Format the server drives and restore from last month’s backup',
+          'Notify external media and customers before assessing scope'
+        ],
+        answer: 1,
+        explanation: 'Containment (isolating the host from network shares and lateral movement paths) stops active spread immediately while preserving volatile memory and forensic evidence before eradication and recovery.'
+      },
+      {
+        id: 'starter-d5-6',
+        domain: 5,
+        source: 'starter',
+        question: 'Which authentication mechanism provides the STRONGEST resistance against real-time adversary-in-the-middle (AiTM) phishing proxies?',
+        options: [
+          'SMS one-time passcodes (OTP)',
+          'FIDO2 / WebAuthn cryptographic passkeys or hardware security keys',
+          'Time-based one-time passwords (TOTP) in an authenticator app',
+          'Knowledge-based security questions'
+        ],
+        answer: 1,
+        explanation: 'FIDO2/WebAuthn binds cryptographic challenge-response signatures directly to the legitimate TLS origin domain, neutralizing AiTM phishing proxies that relay OTP codes.'
+      }
+    ];
+
+    // Application State
+    let customQuestions = [];
+    let sessionState = {
+      active: false,
+      questions: [],
+      currentIndex: 0,
+      answers: {},      // { [index]: selectedOptionIndex }
+      flagged: {},      // { [index]: true }
+      mode: 'study',    // 'study' | 'exam'
+      highlight: true,
+      timed: false,
+      secondsRemaining: 0,
+      totalSeconds: 0,
+      timerInterval: null,
+      reviewFilter: 'all'
+    };
+
+    // Utility: Toast Notification (never uses alert)
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toast-container');
+      const colors = {
+        info: 'border-cyan-400/40 bg-slate-900/95 text-cyan-200',
+        success: 'border-emerald-400/40 bg-slate-900/95 text-emerald-200',
+        warning: 'border-amber-400/40 bg-slate-900/95 text-amber-200',
+        error: 'border-rose-400/40 bg-slate-900/95 text-rose-200'
+      };
+      const el = document.createElement('div');
+      el.className = `pointer-events-auto px-4 py-3 rounded-xl border shadow-xl text-xs sm:text-sm font-medium backdrop-blur-md transition-all duration-300 ${colors[type] || colors.info}`;
+      el.textContent = message;
+      container.appendChild(el);
+      setTimeout(() => {
+        el.style.opacity = '0';
+        el.style.transform = 'translateY(6px)';
+        setTimeout(() => el.remove(), 300);
+      }, 3600);
+    }
+
+    // Load & Save Custom Question Bank in localStorage
+    function loadCustomBank() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) {
+          customQuestions = [];
+          return;
+        }
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+          customQuestions = parsed.filter(q =>
+            q && typeof q.question === 'string' && Array.isArray(q.options) && q.options.length >= 2 && typeof q.answer === 'number'
+          );
+        }
+      } catch (err) {
+        console.error('Failed to load custom bank:', err);
+        customQuestions = [];
+      }
+    }
+
+    function saveCustomBank() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(customQuestions));
+      } catch (err) {
+        showToast('Storage quota warning: could not persist all questions to localStorage.', 'warning');
+      }
+    }
+
+    function getAllQuestions() {
+      return [...STARTER_QUESTIONS, ...customQuestions];
+    }
+
+    // Stem Normalization for Deduplication
+    function normalizeStem(text) {
+      return (text || '')
+        .toLowerCase()
+        .replace(/^question\s*:?\s*/i, '')
+        .replace(/[^a-z0-9]+/g, '')
+        .slice(0, 130);
+    }
+
+    // Automatic ISACA Domain Classifier (Domains 1-5)
+    function classifyDomain(questionText, sectionHint = '', explanationText = '') {
+      const sec = (sectionHint || '').toUpperCase();
+      if (sec) {
+        if (sec.includes('AUDIT')) return 1;
+        if (sec.includes('GOVERNANCE') || sec.includes('MANAGEMENT OF IT')) return 2;
+        if (sec.includes('ACQUISITION') || sec.includes('DEVELOPMENT') || sec.includes('IMPLEMENTATION')) return 3;
+        if (sec.includes('OPERATIONS') || sec.includes('RESILIENCE') || sec.includes('CONTINUITY')) return 4;
+        if (sec.includes('PROTECTION') || sec.includes('SECURITY') || sec.includes('ASSET')) return 5;
+      }
+
+      const combined = `${questionText} ${explanationText}`.toLowerCase();
+      const scores = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+
+      const keywords = {
+        1: [
+          'audit charter', 'audit evidence', 'sampling', 'attribute sampling', 'variable sampling',
+          'discovery sampling', 'substantive test', 'compliance test', 'detection risk', 'inherent risk',
+          'control risk', 'audit risk', 'caat', 'generalized audit software', 'gas', 'integrated test facility',
+          'itf', 'scarf', 'audit trail', 'audit hook', 'working paper', 'exit conference', 'exit interview',
+          'control self-assessment', 'csa', 'continuous auditing', 'soc 1', 'soc 2', 'bridge letter',
+          'forensic', 'chain of custody', 'independence', 'objectivity', 'materiality', 'audit objective'
+        ],
+        2: [
+          'governance', 'cobit', 'steering committee', 'board of directors', 'balanced scorecard', 'bsc',
+          'enterprise architecture', 'portfolio management', 'raci', 'segregation of duties', 'sod',
+          'compensating control', 'data owner', 'data custodian', 'data administrator', 'data governance',
+          'strategic plan', 'tactical plan', 'policy', 'standard', 'guideline', 'procedure', 'outsourcing',
+          'third-party', 'service provider', 'maturity model', 'cmmi', 'kpi', 'kri', 'business plan',
+          'job description', 'mandatory vacation', 'cross-training', 'shadow it', 'risk appetite', 'roi', 'npv'
+        ],
+        3: [
+          'sdlc', 'software development', '4gl', 'fourth generation', 'fourth-generation', 'prototyping',
+          'rapid application development', 'rad', 'agile', 'scrum', 'waterfall', 'function point', 'fpa',
+          'pert', 'gantt', 'critical path', 'cpm', 'feasibility', 'requirements', 'traceability matrix',
+          'unit test', 'integration test', 'system test', 'user acceptance test', 'uat', 'regression test',
+          'blackbox', 'whitebox', 'cutover', 'parallel run', 'data migration', 'escrow', 'source code',
+          'compiler', 'object code', 'library control', 'change management', 'change control', 'cab',
+          'post-implementation review', 'pir', 'scope creep', 'baselining', 'edi', 'bpr', 'reengineering',
+          'edit check', 'check digit', 'completeness check', 'reasonableness check', 'run-to-run', 'batch total'
+        ],
+        4: [
+          'business continuity', 'bcp', 'disaster recovery', 'drp', 'business impact analysis', 'bia',
+          'rto', 'rpo', 'mtd', 'wrt', 'cold site', 'warm site', 'hot site', 'mobile site', 'mirrored site',
+          'parallel test', 'preparedness test', 'walk-through', 'paper test', 'backup', 'differential',
+          'incremental', 'off-site', 'electronic vaulting', 'remote journaling', 'shadow file', 'raid',
+          'ups', 'uninterruptible power', 'hvac', 'fire suppression', 'sprinkler', 'dry-pipe', 'halon',
+          'incident management', 'problem management', 'sla', 'ola', 'capacity management', 'downtime',
+          'database administrator', 'dba', 'concurrency', 'atomicity', 'acid', 'referential integrity',
+          'console log', 'spool', 'job scheduling', 'network topology', 'mesh', 'bridge', 'router', 'hub',
+          'modem', 'front end processor', 'gateway', 'parity', 'redundancy check'
+        ],
+        5: [
+          'encryption', 'cryptograph', 'pki', 'public key', 'private key', 'symmetric', 'asymmetric',
+          'digital signature', 'hash', 'message digest', 'certificate', 'registration authority', 'ca',
+          'ssl', 'tls', 'vpn', 'split tunneling', 'firewall', 'bastion host', 'screened subnet', 'dmz',
+          'ids', 'ips', 'intrusion', 'honeypot', 'biometric', 'far', 'frr', 'cer', 'eer', 'mantrap',
+          'piggybacking', 'tailgating', 'access control', 'acl', 'least privilege', 'authentication',
+          'authorization', 'nonrepudiation', 'non-repudiation', 'password', 'single sign-on', 'sso',
+          'oauth', 'oidc', 'kerberos', 'virus', 'worm', 'trojan', 'polymorphic', 'malware', 'ransomware',
+          'dos', 'ddos', 'traffic analysis', 'data diddling', 'salami', 'dlp', 'data loss prevention',
+          'sanitiz', 'demagnetiz', 'degauss', 'privacy', 'gdpr', 'rfid', 'callback', 'call-back', 'wap'
+        ]
+      };
+
+      for (const [dom, list] of Object.entries(keywords)) {
+        for (const kw of list) {
+          if (combined.includes(kw)) {
+            scores[dom] += kw.includes(' ') ? 2.5 : 1.5;
+          }
+        }
+      }
+
+      let bestDomain = 1;
+      let maxScore = -1;
+      for (const d of [1, 2, 3, 4, 5]) {
+        if (scores[d] > maxScore) {
+          maxScore = scores[d];
+          bestDomain = d;
+        }
+      }
+      return bestDomain;
+    }
+
+    // Smart Dual-Format CISA Regex Parser
+    function parseCisaRawText(rawText, originLabel = 'Imported PDF') {
+      if (!rawText || typeof rawText !== 'string') return [];
+
+      // Clean common PDF extraction artifacts & conversational noise
+      let cleaned = rawText
+        .replace(/\r\n/g, '\n')
+        .replace(/\[Page\s*\d+\]/gi, '\n')
+        .replace(/\[source:\s*\d+\]/gi, '')
+        .replace(/^Exam\s+[A-Z]\s*$/gim, '')
+        .replace(/^Feel free to ask if you have any further questions.*$/gim, '');
+
+      // Split into question blocks using QUESTION <number> markers
+      const blocks = cleaned.split(/(?:^|\n)\s*QUESTION\s+\d+\b[:.\-]?\s*/i).filter(b => b.trim().length > 20);
+      const parsedQuestions = [];
+
+      for (const rawBlock of blocks) {
+        try {
+          let block = rawBlock.trim();
+
+          // Extract Explanation if present
+          let explanation = '';
+          const expMatch = block.match(/(?:^|\n)\s*Explanation\s*:\s*([\s\S]*)$/i);
+          if (expMatch) {
+            explanation = expMatch[1].replace(/\s+/g, ' ').trim();
+            block = block.slice(0, expMatch.index).trim();
+          }
+
+          // Extract Section hint if present
+          let sectionHint = '';
+          const secMatch = block.match(/(?:^|\n)\s*Section\s*:\s*([^\n]+)/i);
+          if (secMatch) {
+            sectionHint = secMatch[1].trim();
+            block = block.replace(secMatch[0], '\n').trim();
+          }
+
+          // Extract explicit Correct Answer letter (Format A)
+          let explicitLetter = null;
+          const ansMatch = block.match(/(?:^|\n)\s*Correct\s+Answer\s*:\s*([A-D])\b/i);
+          if (ansMatch) {
+            explicitLetter = ansMatch[1].toUpperCase();
+            block = block.slice(0, ansMatch.index).trim();
+          }
+
+          // Normalize stray colon lines or split bullets like "•\nOption text"
+          block = block
+            .replace(/^\s*Question\s*:\s*/i, '')
+            .replace(/(?:^|\n)\s*:\s*\n/g, '\n')
+            .replace(/•\s*\n+\s*/g, '• ');
+
+          const lines = block
+            .split('\n')
+            .map(l => l.trim())
+            .filter(l => l.length > 0);
+
+          if (lines.length < 3) continue;
+
+          // Check if Format A (Lettered options A-D)
+          const letterLineRegex = /^(?:[•\-*:]\s*)?([A-D])[\)\.]\s*(.*)$/i;
+          const letterStartIndices = [];
+          lines.forEach((line, idx) => {
+            const m = line.match(letterLineRegex);
+            if (m) {
+              const letter = m[1].toUpperCase();
+              // Ensure monotonic progression A -> B -> C -> D
+              const expectedCode = 65 + letterStartIndices.length;
+              if (letter.charCodeAt(0) === expectedCode) {
+                letterStartIndices.push(idx);
+              }
+            }
+          });
+
+          let stem = '';
+          let options = [];
+          let correctIndex = -1;
+
+          if (letterStartIndices.length >= 2) {
+            // FORMAT A: Lettered Options
+            stem = lines.slice(0, letterStartIndices[0]).join(' ').replace(/\s+/g, ' ').trim();
+
+            for (let i = 0; i < letterStartIndices.length; i++) {
+              const start = letterStartIndices[i];
+              const end = i + 1 < letterStartIndices.length ? letterStartIndices[i + 1] : lines.length;
+              const optLines = lines.slice(start, end);
+              optLines[0] = optLines[0].replace(letterLineRegex, '$2').trim();
+              let optText = optLines.join(' ').replace(/\s+/g, ' ').trim();
+
+              if (/\(Correct(?:\s+Answer)?\)/i.test(optText)) {
+                correctIndex = i;
+                optText = optText.replace(/\(Correct(?:\s+Answer)?\)/gi, '').trim();
+              }
+              options.push(optText);
+            }
+
+            if (explicitLetter) {
+              const idxFromLetter = explicitLetter.charCodeAt(0) - 65;
+              if (idxFromLetter >= 0 && idxFromLetter < options.length) {
+                correctIndex = idxFromLetter;
+              }
+            }
+          } else {
+            // FORMAT B: Inline Marked Options (e.g. "Option text (Correct Answer)")
+            // Merge any standalone "(Correct Answer)" line onto the preceding line
+            const mergedLines = [];
+            for (const line of lines) {
+              if (/^\(Correct(?:\s+Answer)?\)\.?$/i.test(line) && mergedLines.length > 0) {
+                mergedLines[mergedLines.length - 1] += ' ' + line;
+              } else {
+                mergedLines.push(line);
+              }
+            }
+
+            // Detect where options begin:
+            // Either bullet lines starting with '•' or True/False pair or the last 4 option lines
+            const bulletIndices = [];
+            mergedLines.forEach((l, idx) => {
+              if (/^•\s*/.test(l)) bulletIndices.push(idx);
+            });
+
+            if (bulletIndices.length >= 2 && bulletIndices.length <= 5 && bulletIndices[0] >= 1) {
+              stem = mergedLines.slice(0, bulletIndices[0]).join(' ').replace(/\s+/g, ' ').trim();
+              const rawOpts = mergedLines.slice(bulletIndices[0]);
+              rawOpts.forEach((o, idx) => {
+                let cleanOpt = o.replace(/^•\s*/, '').trim();
+                if (/\(Correct(?:\s+Answer)?\)/i.test(cleanOpt)) {
+                  correctIndex = idx;
+                  cleanOpt = cleanOpt.replace(/\(Correct(?:\s+Answer)?\)/gi, '').trim();
+                }
+                options.push(cleanOpt);
+              });
+            } else {
+              // Check True/False or 4-line option tail
+              const tfIdx = mergedLines.findIndex(l => /^True\.?(?:\s*\(Correct(?:\s+Answer)?\))?$/i.test(l));
+              if (tfIdx >= 1 && mergedLines.length - tfIdx === 2) {
+                stem = mergedLines.slice(0, tfIdx).join(' ').replace(/\s+/g, ' ').trim();
+                mergedLines.slice(tfIdx).forEach((o, idx) => {
+                  let cleanOpt = o.replace(/^•\s*/, '').trim();
+                  if (/\(Correct(?:\s+Answer)?\)/i.test(cleanOpt)) {
+                    correctIndex = idx;
+                    cleanOpt = cleanOpt.replace(/\(Correct(?:\s+Answer)?\)/gi, '').trim();
+                  }
+                  options.push(cleanOpt);
+                });
+              } else if (mergedLines.length >= 5) {
+                const splitPoint = mergedLines.length - 4;
+                stem = mergedLines.slice(0, splitPoint).join(' ').replace(/\s+/g, ' ').trim();
+                mergedLines.slice(splitPoint).forEach((o, idx) => {
+                  let cleanOpt = o.replace(/^•\s*/, '').trim();
+                  if (/\(Correct(?:\s+Answer)?\)/i.test(cleanOpt)) {
+                    correctIndex = idx;
+                    cleanOpt = cleanOpt.replace(/\(Correct(?:\s+Answer)?\)/gi, '').trim();
+                  }
+                  options.push(cleanOpt);
+                });
+              }
+            }
+          }
+
+          if (!stem || options.length < 2 || correctIndex < 0 || correctIndex >= options.length) {
+            continue;
+          }
+
+          const domain = classifyDomain(stem, sectionHint, explanation);
+          parsedQuestions.push({
+            id: `imp-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+            domain,
+            source: 'imported',
+            originFile: originLabel,
+            question: stem,
+            options,
+            answer: correctIndex,
+            explanation: explanation || 'Refer to ISACA CISA Review Manual standards and domain best practices for this control objective.'
+          });
+        } catch (e) {
+          // Skip malformed individual block safely
+        }
+      }
+
+      return parsedQuestions;
+    }
+
+    // Extract structured line-by-line text from a PDF ArrayBuffer via PDF.js
+    async function extractTextFromPdfBuffer(arrayBuffer) {
+      if (!window.pdfjsLib) {
+        throw new Error('PDF.js library failed to load. Check internet connection.');
+      }
+      const loadingTask = window.pdfjsLib.getDocument({ data: arrayBuffer });
+      const pdf = await loadingTask.promise;
+      let fullText = '';
+
+      for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+        const page = await pdf.getPage(pageNum);
+        const textContent = await page.getTextContent();
+
+        // Group text items by Y-coordinate so lines stay in exact reading order
+        const lineBuckets = [];
+        const yTolerance = 3.5;
+
+        for (const item of textContent.items) {
+          if (!item.str || !item.str.trim()) continue;
+          const x = item.transform[4];
+          const y = item.transform[5];
+
+          let bucket = lineBuckets.find(b => Math.abs(b.y - y) <= yTolerance);
+          if (!bucket) {
+            bucket = { y, items: [] };
+            lineBuckets.push(bucket);
+          }
+          bucket.items.push({ x, str: item.str });
+        }
+
+        // Sort top-to-bottom (higher Y first in PDF coordinates), then left-to-right
+        lineBuckets.sort((a, b) => b.y - a.y);
+        const pageLines = lineBuckets.map(bucket => {
+          bucket.items.sort((a, b) => a.x - b.x);
+          return bucket.items.map(i => i.str).join(' ').replace(/\s+/g, ' ').trim();
+        });
+
+        fullText += pageLines.join('\n') + '\n';
+      }
+
+      return fullText;
+    }
+
+    // Merge newly parsed questions into customQuestions with deduplication
+    function mergeNewQuestions(candidates) {
+      const existingStems = new Set(getAllQuestions().map(q => normalizeStem(q.question)));
+      let added = 0;
+      let duplicates = 0;
+
+      for (const q of candidates) {
+        const norm = normalizeStem(q.question);
+        if (!norm || existingStems.has(norm)) {
+          duplicates++;
+          continue;
+        }
+        existingStems.add(norm);
+        customQuestions.push(q);
+        added++;
+      }
+
+      if (added > 0) {
+        saveCustomBank();
+      }
+      refreshBankUI();
+      return { added, duplicates };
+    }
+
+    // Handle Multi-File Upload (PDF, TXT, JSON)
+    async function handleFilesUpload(fileList) {
+      const files = Array.from(fileList || []);
+      if (!files.length) return;
+
+      const progressBox = document.getElementById('import-progress-box');
+      const statusLabel = document.getElementById('import-status-label');
+      const countLabel = document.getElementById('import-count-label');
+      const progressBar = document.getElementById('import-progress-bar');
+      const fileLog = document.getElementById('import-file-log');
+
+      progressBox.classList.remove('hidden');
+      fileLog.innerHTML = '';
+      progressBar.style.width = '5%';
+
+      let totalAdded = 0;
+      let totalDupes = 0;
+
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        statusLabel.textContent = `Processing (${i + 1}/${files.length}): ${file.name}`;
+        const pct = Math.round(((i + 0.3) / files.length) * 100);
+        progressBar.style.width = `${pct}%`;
+
+        try {
+          let parsedFromFile = [];
+          const lowerName = file.name.toLowerCase();
+
+          if (lowerName.endsWith('.pdf')) {
+            const buffer = await file.arrayBuffer();
+            const extractedText = await extractTextFromPdfBuffer(buffer);
+            parsedFromFile = parseCisaRawText(extractedText, file.name);
+          } else if (lowerName.endsWith('.json')) {
+            const text = await file.text();
+            const json = JSON.parse(text);
+            const arr = Array.isArray(json) ? json : (json.questions || json.answeredQuestions || []);
+            parsedFromFile = arr
+              .filter(item => item && item.question && Array.isArray(item.options) && typeof item.answer === 'number')
+              .map(item => ({
+                id: `imp-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+                domain: [1, 2, 3, 4, 5].includes(item.domain) ? item.domain : classifyDomain(item.question, '', item.explanation || ''),
+                source: 'imported',
+                originFile: file.name,
+                question: item.question.trim(),
+                options: item.options.map(o => String(o).trim()),
+                answer: item.answer,
+                explanation: item.explanation || 'Imported JSON question.'
+              }));
+          } else {
+            const text = await file.text();
+            parsedFromFile = parseCisaRawText(text, file.name);
+          }
+
+          const { added, duplicates } = mergeNewQuestions(parsedFromFile);
+          totalAdded += added;
+          totalDupes += duplicates;
+
+          const row = document.createElement('div');
+          row.className = 'flex items-center justify-between text-slate-300';
+          row.innerHTML = `<span>✓ ${escapeHtml(file.name)}</span><span class="text-emerald-300">+${added} added (${duplicates} dupes)</span>`;
+          fileLog.appendChild(row);
+        } catch (err) {
+          const row = document.createElement('div');
+          row.className = 'text-rose-300';
+          row.textContent = `✕ ${file.name}: ${err.message || 'Parse error'}`;
+          fileLog.appendChild(row);
+        }
+
+        countLabel.textContent = `+${totalAdded} added`;
+        progressBar.style.width = `${Math.round(((i + 1) / files.length) * 100)}%`;
+      }
+
+      statusLabel.textContent = `Completed ${files.length} file(s)`;
+      showToast(`Imported ${totalAdded} new questions (${totalDupes} duplicates skipped).`, 'success');
+    }
+
+    // Refresh Live Question Bank Counters & Domain Cards
+    function refreshBankUI() {
+      const all = getAllQuestions();
+      const counts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+      all.forEach(q => {
+        if (counts[q.domain] !== undefined) counts[q.domain]++;
+      });
+
+      document.getElementById('total-bank-count').textContent = all.length;
+      document.getElementById('d1-count').textContent = counts[1];
+      document.getElementById('d2-count').textContent = counts[2];
+      document.getElementById('d3-count').textContent = counts[3];
+      document.getElementById('d4-count').textContent = counts[4];
+      document.getElementById('d5-count').textContent = counts[5];
+
+      document.getElementById('modal-starter-count').textContent = STARTER_QUESTIONS.length;
+      document.getElementById('modal-imported-count').textContent = customQuestions.length;
+      document.getElementById('modal-total-count').textContent = all.length;
+
+      // Render Domain Blueprint Cards
+      const grid = document.getElementById('domain-cards-grid');
+      const accentClasses = {
+        cyan: 'border-cyan-500/25 text-cyan-300 bg-cyan-500/10',
+        indigo: 'border-indigo-500/25 text-indigo-300 bg-indigo-500/10',
+        amber: 'border-amber-500/25 text-amber-300 bg-amber-500/10',
+        emerald: 'border-emerald-500/25 text-emerald-300 bg-emerald-500/10',
+        rose: 'border-rose-500/25 text-rose-300 bg-rose-500/10'
+      };
+
+      grid.innerHTML = Object.values(DOMAINS).map(d => `
+        <div class="glass-card rounded-xl p-4 space-y-2 hover:border-slate-600/70 transition">
+          <div class="flex items-center justify-between">
+            <span class="px-2 py-0.5 rounded text-xs font-mono font-bold border ${accentClasses[d.accent]}">${d.short} • ${d.pct}</span>
+            <span class="text-xs font-mono text-slate-400">${counts[d.id]} Qs</span>
+          </div>
+          <div class="text-xs sm:text-sm font-bold text-white leading-snug">${d.name}</div>
+        </div>
+      `).join('');
+
+      updateMatchingPoolCount();
+    }
+
+    function getFilteredPool() {
+      const domainVal = document.getElementById('cfg-domain').value;
+      const sourceVal = document.getElementById('cfg-source').value;
+
+      let pool = getAllQuestions();
+      if (sourceVal === 'imported') {
+        pool = pool.filter(q => q.source === 'imported');
+      } else if (sourceVal === 'starter') {
+        pool = pool.filter(q => q.source === 'starter');
+      }
+
+      if (domainVal !== 'all') {
+        const targetDom = Number(domainVal);
+        pool = pool.filter(q => q.domain === targetDom);
+      }
+
+      return pool;
+    }
+
+    function updateMatchingPoolCount() {
+      const pool = getFilteredPool();
+      document.getElementById('matching-pool-badge').textContent = `${pool.length} matching question${pool.length === 1 ? '' : 's'}`;
+    }
+
+    // Fisher-Yates Shuffle
+    function shuffleArray(arr) {
+      const copy = [...arr];
+      for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    }
+
+    // Proportional ISACA Blueprint Sampling
+    function buildSessionQuestions(pool, desiredCount, isAllDomains) {
+      if (desiredCount === 'all' || Number(desiredCount) >= pool.length) {
+        return shuffleArray(pool);
+      }
+      const target = Number(desiredCount);
+      if (!isAllDomains) {
+        return shuffleArray(pool).slice(0, target);
+      }
+
+      // Bucket by domain and sample proportionally (18 / 18 / 12 / 26 / 26%)
+      const buckets = { 1: [], 2: [], 3: [], 4: [], 5: [] };
+      pool.forEach(q => buckets[q.domain].push(q));
+      for (const d of [1, 2, 3, 4, 5]) {
+        buckets[d] = shuffleArray(buckets[d]);
+      }
+
+      const selected = [];
+      const usedIds = new Set();
+
+      for (const d of [1, 2, 3, 4, 5]) {
+        const quota = Math.round(target * DOMAINS[d].weight);
+        const take = buckets[d].slice(0, quota);
+        take.forEach(q => {
+          selected.push(q);
+          usedIds.add(q.id);
+        });
+      }
+
+      // Fill any rounding remainder or shortfall from remaining shuffled pool
+      if (selected.length < target) {
+        const leftovers = shuffleArray(pool.filter(q => !usedIds.has(q.id)));
+        selected.push(...leftovers.slice(0, target - selected.length));
+      } else if (selected.length > target) {
+        return shuffleArray(selected).slice(0, target);
+      }
+
+      return shuffleArray(selected);
+    }
+
+    // Prepare Question Instance (optionally shuffling answer options)
+    function prepareQuestionInstance(rawQ, shuffleOptions) {
+      const indexedOpts = rawQ.options.map((text, idx) => ({
+        text,
+        isCorrect: idx === rawQ.answer
+      }));
+      const finalOpts = shuffleOptions ? shuffleArray(indexedOpts) : indexedOpts;
+      const newAnswerIdx = finalOpts.findIndex(o => o.isCorrect);
+
+      return {
+        ...rawQ,
+        options: finalOpts.map(o => o.text),
+        answer: newAnswerIdx
+      };
+    }
+
+    // Highlight ISACA Exam Qualifiers in Question Stem
+    function formatStemWithQualifiers(text, enabled) {
+      const safe = escapeHtml(text);
+      if (!enabled) return safe;
+      const qualifierRegex = /\b(FIRST|BEST|GREATEST|MOST|PRIMARY|LEAST|INITIAL|ULTIMATE|ROOT CAUSE|NOT|EXCEPT|NEXT)\b/g;
+      return safe.replace(qualifierRegex, '<span class="qualifier-pill">$1</span>');
+    }
+
+    function escapeHtml(str) {
+      return String(str || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    // Start Quiz Session
+    function startQuizSession(customList = null) {
+      const pool = customList || getFilteredPool();
+      if (!pool.length) {
+        showToast('No questions match your current filter. Import PDFs or adjust filters.', 'warning');
+        return;
+      }
+
+      const isAllDomains = document.getElementById('cfg-domain').value === 'all';
+      const lengthVal = customList ? 'all' : document.getElementById('cfg-length').value;
+      const mode = document.getElementById('cfg-mode').value;
+      const shuffleOpts = document.getElementById('cfg-shuffle-opts').checked;
+      const highlight = document.getElementById('cfg-highlight').checked;
+      const timed = document.getElementById('cfg-timer').checked;
+
+      const sampled = buildSessionQuestions(pool, lengthVal, isAllDomains && !customList);
+      const prepared = sampled.map(q => prepareQuestionInstance(q, shuffleOpts));
+
+      if (sessionState.timerInterval) {
+        clearInterval(sessionState.timerInterval);
+      }
+
+      sessionState = {
+        active: true,
+        questions: prepared,
+        currentIndex: 0,
+        answers: {},
+        flagged: {},
+        mode,
+        highlight,
+        timed,
+        secondsRemaining: prepared.length * 96,
+        totalSeconds: prepared.length * 96,
+        timerInterval: null,
+        reviewFilter: 'all'
+      };
+
+      // Switch views
+      document.getElementById('setup-view').classList.add('hidden');
+      document.getElementById('results-view').classList.add('hidden');
+      document.getElementById('quiz-view').classList.remove('hidden');
+
+      document.getElementById('quiz-mode-badge').textContent =
+        mode === 'study' ? 'STUDY MODE • INSTANT FEEDBACK' : 'EXAM SIMULATION • BLIND';
+      document.getElementById('q-total-num').textContent = prepared.length;
+      document.getElementById('toggle-highlight-live').textContent = `Qualifiers: ${highlight ? 'ON' : 'OFF'}`;
+
+      const timerBox = document.getElementById('timer-box');
+      if (timed) {
+        timerBox.classList.remove('hidden');
+        timerBox.classList.add('flex');
+        updateTimerDisplay();
+        sessionState.timerInterval = setInterval(() => {
+          sessionState.secondsRemaining--;
+          updateTimerDisplay();
+          if (sessionState.secondsRemaining <= 0) {
+            clearInterval(sessionState.timerInterval);
+            showToast('Time expired! Submitting exam automatically.', 'warning');
+            finishExam();
+          }
+        }, 1000);
+      } else {
+        timerBox.classList.add('hidden');
+        timerBox.classList.remove('flex');
+      }
+
+      renderCurrentQuestion();
+      renderNavigatorGrid();
+    }
+
+    function updateTimerDisplay() {
+      const secs = Math.max(0, sessionState.secondsRemaining);
+      const hrs = Math.floor(secs / 3600);
+      const mins = Math.floor((secs % 3600) / 60);
+      const remSecs = secs % 60;
+      const formatted = hrs > 0
+        ? `${hrs}:${String(mins).padStart(2, '0')}:${String(remSecs).padStart(2, '0')}`
+        : `${String(mins).padStart(2, '0')}:${String(remSecs).padStart(2, '0')}`;
+      document.getElementById('timer-display').textContent = formatted;
+    }
+
+    // Render Active Question
+    function renderCurrentQuestion() {
+      const idx = sessionState.currentIndex;
+      const q = sessionState.questions[idx];
+      const total = sessionState.questions.length;
+      const userChoice = sessionState.answers[idx];
+      const hasAnswered = userChoice !== undefined;
+      const isFlagged = Boolean(sessionState.flagged[idx]);
+
+      document.getElementById('q-current-num').textContent = idx + 1;
+      document.getElementById('quiz-progress-bar').style.width = `${Math.round(((idx + 1) / total) * 100)}%`;
+
+      const dom = DOMAINS[q.domain] || DOMAINS[1];
+      document.getElementById('q-domain-badge').textContent = `Domain ${dom.id} • ${dom.name} (${dom.pct})`;
+      document.getElementById('q-source-badge').textContent = q.source === 'imported'
+        ? `Imported${q.originFile ? ': ' + q.originFile : ''}`
+        : 'Built-In Starter Bank';
+
+      // Flag button state
+      const flagBtn = document.getElementById('flag-question-btn');
+      const flagLabel = document.getElementById('flag-btn-label');
+      if (isFlagged) {
+        flagBtn.classList.add('border-amber-400', 'text-amber-300', 'bg-amber-500/15');
+        flagLabel.textContent = 'Flagged';
+      } else {
+        flagBtn.classList.remove('border-amber-400', 'text-amber-300', 'bg-amber-500/15');
+        flagLabel.textContent = 'Flag for Review';
+      }
+
+      // Stem
+      document.getElementById('q-stem').innerHTML = formatStemWithQualifiers(q.question, sessionState.highlight);
+
+      // Options
+      const optionsContainer = document.getElementById('q-options');
+      const letters = ['A', 'B', 'C', 'D', 'E'];
+      optionsContainer.innerHTML = q.options.map((optText, optIdx) => {
+        let extraClass = '';
+        let badgeClass = 'bg-slate-800 text-slate-300 border-slate-700';
+
+        if (hasAnswered) {
+          if (sessionState.mode === 'study') {
+            if (optIdx === q.answer) {
+              extraClass = 'option-correct';
+              badgeClass = 'bg-emerald-500 text-slate-950 border-emerald-400';
+            } else if (optIdx === userChoice) {
+              extraClass = 'option-wrong';
+              badgeClass = 'bg-rose-500 text-slate-950 border-rose-400';
+            }
+          } else if (optIdx === userChoice) {
+            extraClass = 'option-selected';
+            badgeClass = 'bg-cyan-400 text-slate-950 border-cyan-300';
+          }
+        }
+
+        return `
+          <button type="button" data-opt-idx="${optIdx}"
+            class="option-btn w-full text-left p-4 rounded-xl flex items-start gap-3.5 cursor-pointer ${extraClass}">
+            <span class="w-7 h-7 rounded-lg border flex items-center justify-center font-mono text-xs font-bold shrink-0 mt-0.5 ${badgeClass}">
+              ${letters[optIdx] || optIdx + 1}
+            </span>
+            <span class="text-sm sm:text-base text-slate-100 leading-relaxed">${escapeHtml(optText)}</span>
+          </button>
+        `;
+      }).join('');
+
+      optionsContainer.querySelectorAll('button[data-opt-idx]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const chosen = Number(btn.getAttribute('data-opt-idx'));
+          selectOption(chosen);
+        });
+      });
+
+      // Explanation box (only in Study Mode once answered)
+      const expBox = document.getElementById('q-explanation-box');
+      if (hasAnswered && sessionState.mode === 'study') {
+        expBox.classList.remove('hidden');
+        document.getElementById('q-explanation-text').textContent = q.explanation;
+      } else {
+        expBox.classList.add('hidden');
+      }
+
+      // Prev / Next state
+      document.getElementById('prev-q-btn').disabled = idx === 0;
+      const nextBtn = document.getElementById('next-q-btn');
+      nextBtn.textContent = idx === total - 1 ? 'Finish & Score →' : 'Next →';
+
+      const answeredCount = Object.keys(sessionState.answers).length;
+      document.getElementById('answered-status-text').textContent = `${answeredCount} / ${total} Answered`;
+    }
+
+    function selectOption(optIdx) {
+      const idx = sessionState.currentIndex;
+      // In study mode, lock answer once selected so user can read rationale; in exam simulation, allow changing answer freely
+      if (sessionState.mode === 'study' && sessionState.answers[idx] !== undefined) {
+        return;
+      }
+      sessionState.answers[idx] = optIdx;
+      renderCurrentQuestion();
+      renderNavigatorGrid();
+    }
+
+    function renderNavigatorGrid() {
+      const grid = document.getElementById('question-nav-grid');
+      const total = sessionState.questions.length;
+      const flaggedCount = Object.keys(sessionState.flagged).filter(k => sessionState.flagged[k]).length;
+      document.getElementById('flagged-count-label').textContent = `${flaggedCount} Flagged`;
+
+      grid.innerHTML = sessionState.questions.map((q, i) => {
+        const isCurrent = i === sessionState.currentIndex;
+        const ans = sessionState.answers[i];
+        const isAnswered = ans !== undefined;
+        const isFlagged = Boolean(sessionState.flagged[i]);
+
+        let cls = 'bg-slate-900/90 text-slate-400 border-slate-800 hover:border-slate-600';
+        if (isAnswered) {
+          if (sessionState.mode === 'study') {
+            cls = ans === q.answer
+              ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
+              : 'bg-rose-500/20 text-rose-300 border-rose-500/40';
+          } else {
+            cls = 'bg-indigo-500/25 text-indigo-200 border-indigo-400/50';
+          }
+        }
+        if (isCurrent) {
+          cls += ' ring-2 ring-cyan-400 text-white font-extrabold';
+        }
+
+        return `
+          <button type="button" data-nav-idx="${i}"
+            class="relative h-9 rounded-lg border font-mono text-xs font-semibold flex items-center justify-center transition cursor-pointer ${cls}">
+            ${i + 1}
+            ${isFlagged ? '<span class="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-amber-400 border border-slate-950"></span>' : ''}
+          </button>
+        `;
+      }).join('');
+
+      grid.querySelectorAll('button[data-nav-idx]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          sessionState.currentIndex = Number(btn.getAttribute('data-nav-idx'));
+          renderCurrentQuestion();
+          renderNavigatorGrid();
+        });
+      });
+    }
+
+    // Submit & Score Exam
+    function finishExam() {
+      if (sessionState.timerInterval) {
+        clearInterval(sessionState.timerInterval);
+      }
+      sessionState.active = false;
+
+      const total = sessionState.questions.length;
+      let correct = 0;
+      const domainStats = {
+        1: { correct: 0, total: 0 },
+        2: { correct: 0, total: 0 },
+        3: { correct: 0, total: 0 },
+        4: { correct: 0, total: 0 },
+        5: { correct: 0, total: 0 }
+      };
+
+      sessionState.questions.forEach((q, idx) => {
+        const userAns = sessionState.answers[idx];
+        const isCorrect = userAns === q.answer;
+        if (isCorrect) correct++;
+        domainStats[q.domain].total++;
+        if (isCorrect) domainStats[q.domain].correct++;
+      });
+
+      const accuracy = total > 0 ? correct / total : 0;
+      const scaledScore = Math.round(200 + accuracy * 600);
+      const passed = scaledScore >= 450;
+
+      document.getElementById('quiz-view').classList.add('hidden');
+      document.getElementById('results-view').classList.remove('hidden');
+
+      const passBadge = document.getElementById('result-pass-badge');
+      if (passed) {
+        passBadge.textContent = 'PASSING STANDARD MET (≥ 450)';
+        passBadge.className = 'px-3 py-1 rounded-full text-xs font-mono font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-400/40';
+      } else {
+        passBadge.textContent = 'BELOW PASSING MARK (< 450) — TARGET WEAK DOMAINS';
+        passBadge.className = 'px-3 py-1 rounded-full text-xs font-mono font-bold bg-rose-500/20 text-rose-300 border border-rose-400/40';
+      }
+
+      document.getElementById('scaled-score-value').textContent = scaledScore;
+      document.getElementById('scaled-score-value').className = `text-5xl sm:text-6xl font-extrabold font-mono ${passed ? 'text-emerald-300' : 'text-amber-300'}`;
+      document.getElementById('raw-score-text').textContent = `${correct} / ${total} (${Math.round(accuracy * 100)}%)`;
+      document.getElementById('scaled-score-bar').style.width = `${Math.round(accuracy * 100)}%`;
+
+      const missedCount = total - correct;
+      document.getElementById('missed-btn-count').textContent = missedCount;
+      document.getElementById('retake-missed-btn').disabled = missedCount === 0;
+      if (missedCount === 0) {
+        document.getElementById('retake-missed-btn').classList.add('opacity-40');
+      } else {
+        document.getElementById('retake-missed-btn').classList.remove('opacity-40');
+      }
+
+      // Render Domain Mastery Bars
+      const domainList = document.getElementById('domain-results-list');
+      domainList.innerHTML = Object.values(DOMAINS).map(dom => {
+        const st = domainStats[dom.id];
+        if (st.total === 0) {
+          return `
+            <div class="space-y-1.5 opacity-50">
+              <div class="flex justify-between text-xs font-mono">
+                <span>${dom.short} • ${dom.name} (${dom.pct})</span>
+                <span>Not Tested in Session</span>
+              </div>
+              <div class="w-full h-2 rounded-full bg-slate-900"></div>
+            </div>
+          `;
+        }
+        const pct = Math.round((st.correct / st.total) * 100);
+        const barColor = pct >= 75 ? 'bg-emerald-400' : pct >= 60 ? 'bg-amber-400' : 'bg-rose-400';
+        return `
+          <div class="space-y-1.5">
+            <div class="flex flex-wrap justify-between text-xs sm:text-sm font-mono gap-2">
+              <span class="text-slate-200 font-semibold">${dom.short} • ${dom.name} <span class="text-slate-400">(${dom.pct} weight)</span></span>
+              <span class="text-white font-bold">${st.correct}/${st.total} (${pct}%)</span>
+            </div>
+            <div class="w-full h-2.5 rounded-full bg-slate-900 overflow-hidden border border-slate-800">
+              <div class="h-full ${barColor} transition-all duration-500" style="width: ${pct}%"></div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      renderDetailedReview('all');
+    }
+
+    function renderDetailedReview(filter) {
+      sessionState.reviewFilter = filter;
+      document.querySelectorAll('.review-filter-btn').forEach(btn => {
+        const active = btn.getAttribute('data-review-filter') === filter;
+        btn.className = active
+          ? 'review-filter-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-cyan-500/20 text-cyan-300 border border-cyan-400/40 cursor-pointer'
+          : 'review-filter-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300 border border-slate-700 cursor-pointer';
+      });
+
+      const letters = ['A', 'B', 'C', 'D', 'E'];
+      const items = sessionState.questions
+        .map((q, idx) => ({
+          q,
+          idx,
+          userAns: sessionState.answers[idx],
+          isCorrect: sessionState.answers[idx] === q.answer,
+          isFlagged: Boolean(sessionState.flagged[idx])
+        }))
+        .filter(item => {
+          if (filter === 'missed') return !item.isCorrect;
+          if (filter === 'flagged') return item.isFlagged;
+          return true;
+        });
+
+      const container = document.getElementById('detailed-review-list');
+      if (!items.length) {
+        container.innerHTML = `<div class="text-sm text-slate-400 py-6 text-center">No questions match the selected "${filter}" filter.</div>`;
+        return;
+      }
+
+      container.innerHTML = items.map(({ q, idx, userAns, isCorrect, isFlagged }) => {
+        const dom = DOMAINS[q.domain] || DOMAINS[1];
+        const userLabel = userAns !== undefined
+          ? `${letters[userAns]}. ${escapeHtml(q.options[userAns])}`
+          : 'Unanswered';
+        const correctLabel = `${letters[q.answer]}. ${escapeHtml(q.options[q.answer])}`;
+
+        return `
+          <div class="rounded-xl p-4 sm:p-5 bg-slate-900/80 border ${isCorrect ? 'border-emerald-500/25' : 'border-rose-500/35'} space-y-3">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="px-2 py-0.5 rounded text-xs font-mono font-bold ${isCorrect ? 'bg-emerald-500/20 text-emerald-300' : 'bg-rose-500/20 text-rose-300'}">
+                  Q${idx + 1} • ${isCorrect ? 'CORRECT' : 'MISSED'}
+                </span>
+                <span class="text-xs font-mono text-indigo-300">${dom.short} • ${dom.name}</span>
+                ${isFlagged ? '<span class="px-2 py-0.5 rounded text-[11px] font-mono bg-amber-500/20 text-amber-300">FLAGGED</span>' : ''}
+              </div>
+            </div>
+            <p class="text-sm sm:text-base font-medium text-white">${escapeHtml(q.question)}</p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-2.5 text-xs sm:text-sm">
+              <div class="p-3 rounded-lg bg-slate-950/70 border ${isCorrect ? 'border-emerald-500/30 text-emerald-200' : 'border-rose-500/30 text-rose-200'}">
+                <span class="font-mono text-[11px] uppercase block opacity-75 mb-0.5">Your Answer</span>
+                ${userLabel}
+              </div>
+              <div class="p-3 rounded-lg bg-slate-950/70 border border-emerald-500/30 text-emerald-200">
+                <span class="font-mono text-[11px] uppercase block opacity-75 mb-0.5">Correct ISACA Answer</span>
+                ${correctLabel}
+              </div>
+            </div>
+            <div class="text-xs sm:text-sm text-slate-300 bg-slate-950/50 p-3 rounded-lg border border-slate-800">
+              <strong class="text-cyan-300 font-mono">Rationale:</strong> ${escapeHtml(q.explanation)}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Download Missed & Flagged Study Guide (.txt)
+    function downloadStudyGuide() {
+      const letters = ['A', 'B', 'C', 'D', 'E'];
+      const targets = sessionState.questions
+        .map((q, idx) => ({
+          q,
+          idx,
+          userAns: sessionState.answers[idx],
+          isCorrect: sessionState.answers[idx] === q.answer,
+          isFlagged: Boolean(sessionState.flagged[idx])
+        }))
+        .filter(item => !item.isCorrect || item.isFlagged);
+
+      if (!targets.length) {
+        showToast('Zero missed or flagged questions — nothing to export!', 'info');
+        return;
+      }
+
+      const lines = [
+        '====================================================================',
+        'CISA EXAM STUDIO — MISSED & FLAGGED STUDY GUIDE',
+        `Generated: ${new Date().toLocaleString()}`,
+        `Total Study Items: ${targets.length}`,
+        '====================================================================',
+        ''
+      ];
+
+      targets.forEach(({ q, idx, userAns, isCorrect, isFlagged }, i) => {
+        const dom = DOMAINS[q.domain] || DOMAINS[1];
+        const statusTags = [!isCorrect ? 'MISSED' : null, isFlagged ? 'FLAGGED' : null].filter(Boolean).join(' + ');
+        lines.push(`[${i + 1}] Original Q#${idx + 1} | Domain ${dom.id}: ${dom.name} | [${statusTags}]`);
+        lines.push(`Question: ${q.question}`);
+        q.options.forEach((opt, oIdx) => {
+          const marker = oIdx === q.answer ? ' [CORRECT]' : (oIdx === userAns ? ' [YOUR CHOICE]' : '');
+          lines.push(`   ${letters[oIdx]}) ${opt}${marker}`);
+        });
+        lines.push(`Rationale: ${q.explanation}`);
+        lines.push('--------------------------------------------------------------------');
+        lines.push('');
+      });
+
+      const blob = new Blob([lines.join('\n')], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `CISA_Study_Guide_${new Date().toISOString().slice(0, 10)}.txt`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      showToast(`Downloaded study guide with ${targets.length} question(s).`, 'success');
+    }
+
+    // Export Full Bank (.json)
+    function exportFullBankJson() {
+      const all = getAllQuestions();
+      const blob = new Blob([JSON.stringify(all, null, 2)], { type: 'application/json;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `CISA_Full_Question_Bank_${all.length}_Qs.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      showToast(`Exported ${all.length} questions as JSON.`, 'success');
+    }
+
+    // Event Wiring
+    document.addEventListener('DOMContentLoaded', () => {
+      loadCustomBank();
+      refreshBankUI();
+
+      // Setup Filters
+      ['cfg-domain', 'cfg-source'].forEach(id => {
+        document.getElementById(id).addEventListener('change', updateMatchingPoolCount);
+      });
+
+      document.getElementById('start-quiz-btn').addEventListener('click', () => startQuizSession());
+
+      // Importer Modal Open/Close
+      const modal = document.getElementById('importer-modal');
+      const openModal = () => {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+      };
+      const closeModal = () => {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      };
+
+      document.getElementById('open-importer-btn').addEventListener('click', openModal);
+      document.getElementById('quick-drop-cta').addEventListener('click', openModal);
+      document.getElementById('close-importer-btn').addEventListener('click', closeModal);
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+      });
+
+      // Importer Tabs
+      const tabPdf = document.getElementById('tab-pdf-upload');
+      const tabPaste = document.getElementById('tab-raw-paste');
+      const panelPdf = document.getElementById('panel-pdf-upload');
+      const panelPaste = document.getElementById('panel-raw-paste');
+
+      tabPdf.addEventListener('click', () => {
+        tabPdf.className = 'px-4 py-2.5 text-xs sm:text-sm font-bold border-b-2 border-cyan-400 text-cyan-300 cursor-pointer';
+        tabPaste.className = 'px-4 py-2.5 text-xs sm:text-sm font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-200 cursor-pointer';
+        panelPdf.classList.remove('hidden');
+        panelPaste.classList.add('hidden');
+      });
+
+      tabPaste.addEventListener('click', () => {
+        tabPaste.className = 'px-4 py-2.5 text-xs sm:text-sm font-bold border-b-2 border-cyan-400 text-cyan-300 cursor-pointer';
+        tabPdf.className = 'px-4 py-2.5 text-xs sm:text-sm font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-200 cursor-pointer';
+        panelPaste.classList.remove('hidden');
+        panelPdf.classList.add('hidden');
+      });
+
+      // Drag & Drop + File Input
+      const dropZone = document.getElementById('drop-zone');
+      const fileInput = document.getElementById('file-input');
+
+      dropZone.addEventListener('click', () => fileInput.click());
+      fileInput.addEventListener('change', (e) => handleFilesUpload(e.target.files));
+
+      dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.classList.add('border-cyan-400', 'bg-cyan-500/10');
+      });
+      dropZone.addEventListener('dragleave', () => {
+        dropZone.classList.remove('border-cyan-400', 'bg-cyan-500/10');
+      });
+      dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('border-cyan-400', 'bg-cyan-500/10');
+        if (e.dataTransfer && e.dataTransfer.files) {
+          handleFilesUpload(e.dataTransfer.files);
+        }
+      });
+
+      // Raw Text / JSON Paste Button
+      document.getElementById('parse-paste-btn').addEventListener('click', () => {
+        const raw = document.getElementById('raw-paste-input').value.trim();
+        if (!raw) {
+          showToast('Paste question text or JSON first.', 'warning');
+          return;
+        }
+        try {
+          let parsed = [];
+          if (raw.startsWith('[') || raw.startsWith('{')) {
+            const json = JSON.parse(raw);
+            const arr = Array.isArray(json) ? json : (json.questions || []);
+            parsed = arr
+              .filter(item => item && item.question && Array.isArray(item.options) && typeof item.answer === 'number')
+              .map(item => ({
+                id: `imp-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+                domain: [1, 2, 3, 4, 5].includes(item.domain) ? item.domain : classifyDomain(item.question, '', item.explanation || ''),
+                source: 'imported',
+                originFile: 'Pasted JSON',
+                question: item.question.trim(),
+                options: item.options.map(o => String(o).trim()),
+                answer: item.answer,
+                explanation: item.explanation || 'Imported JSON question.'
+              }));
+          } else {
+            parsed = parseCisaRawText(raw, 'Pasted Text');
+          }
+
+          if (!parsed.length) {
+            showToast('Could not detect valid CISA questions in pasted text.', 'error');
+            return;
+          }
+          const { added, duplicates } = mergeNewQuestions(parsed);
+          document.getElementById('raw-paste-input').value = '';
+          showToast(`Added ${added} new question(s) (${duplicates} duplicates skipped).`, 'success');
+        } catch (err) {
+          showToast(`Parse error: ${err.message}`, 'error');
+        }
+      });
+
+      // Export & Clear Imported Controls
+      document.getElementById('export-bank-btn').addEventListener('click', exportFullBankJson);
+      document.getElementById('clear-imported-btn').addEventListener('click', () => {
+        if (!customQuestions.length) {
+          showToast('No imported questions to clear.', 'info');
+          return;
+        }
+        document.getElementById('clear-confirm-banner').classList.remove('hidden');
+      });
+      document.getElementById('confirm-clear-no').addEventListener('click', () => {
+        document.getElementById('clear-confirm-banner').classList.add('hidden');
+      });
+      document.getElementById('confirm-clear-yes').addEventListener('click', () => {
+        customQuestions = [];
+        localStorage.removeItem(STORAGE_KEY);
+        document.getElementById('clear-confirm-banner').classList.add('hidden');
+        refreshBankUI();
+        showToast('Cleared all imported questions. 30 starter questions retained.', 'info');
+      });
+
+      // Quiz Navigation & Controls
+      document.getElementById('prev-q-btn').addEventListener('click', () => {
+        if (sessionState.currentIndex > 0) {
+          sessionState.currentIndex--;
+          renderCurrentQuestion();
+          renderNavigatorGrid();
+        }
+      });
+
+      document.getElementById('next-q-btn').addEventListener('click', () => {
+        if (sessionState.currentIndex < sessionState.questions.length - 1) {
+          sessionState.currentIndex++;
+          renderCurrentQuestion();
+          renderNavigatorGrid();
+        } else {
+          finishExam();
+        }
+      });
+
+      document.getElementById('flag-question-btn').addEventListener('click', () => {
+        const idx = sessionState.currentIndex;
+        sessionState.flagged[idx] = !sessionState.flagged[idx];
+        renderCurrentQuestion();
+        renderNavigatorGrid();
+      });
+
+      document.getElementById('toggle-highlight-live').addEventListener('click', () => {
+        sessionState.highlight = !sessionState.highlight;
+        document.getElementById('toggle-highlight-live').textContent = `Qualifiers: ${sessionState.highlight ? 'ON' : 'OFF'}`;
+        renderCurrentQuestion();
+      });
+
+      document.getElementById('finish-exam-btn').addEventListener('click', finishExam);
+
+      document.getElementById('quit-session-btn').addEventListener('click', () => {
+        if (sessionState.timerInterval) clearInterval(sessionState.timerInterval);
+        sessionState.active = false;
+        document.getElementById('quiz-view').classList.add('hidden');
+        document.getElementById('setup-view').classList.remove('hidden');
+        refreshBankUI();
+      });
+
+      // Results Actions
+      document.getElementById('new-session-btn').addEventListener('click', () => {
+        document.getElementById('results-view').classList.add('hidden');
+        document.getElementById('setup-view').classList.remove('hidden');
+        refreshBankUI();
+      });
+
+      document.getElementById('retake-missed-btn').addEventListener('click', () => {
+        const missed = sessionState.questions.filter((q, idx) => sessionState.answers[idx] !== q.answer);
+        if (!missed.length) return;
+        startQuizSession(missed);
+      });
+
+      document.getElementById('download-guide-btn').addEventListener('click', downloadStudyGuide);
+
+      document.querySelectorAll('.review-filter-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          renderDetailedReview(btn.getAttribute('data-review-filter'));
+        });
+      });
+
+      // Keyboard Shortcuts during Active Quiz
+      document.addEventListener('keydown', (e) => {
+        if (!sessionState.active) return;
+        if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) return;
+
+        const key = e.key.toUpperCase();
+        if (['A', 'B', 'C', 'D'].includes(key)) {
+          const idx = key.charCodeAt(0) - 65;
+          const q = sessionState.questions[sessionState.currentIndex];
+          if (q && idx < q.options.length) selectOption(idx);
+        } else if (['1', '2', '3', '4'].includes(key)) {
+          const idx = Number(key) - 1;
+          const q = sessionState.questions[sessionState.currentIndex];
+          if (q && idx < q.options.length) selectOption(idx);
+        } else if (e.key === 'ArrowRight') {
+          document.getElementById('next-q-btn').click();
+        } else if (e.key === 'ArrowLeft') {
+          document.getElementById('prev-q-btn').click();
+        } else if (key === 'F') {
+          document.getElementById('flag-question-btn').click();
+        } else if (key === 'H') {
+          document.getElementById('toggle-highlight-live').click();
+        }
+      });
+    });
+  </script>
+</body>
+</html>
