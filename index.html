@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="CISA Practice Studio for ISACA Exam preparation with multi-PDF import, domain-weighted sampling, and offline study capabilities." />
   <title>CISA Practice Studio — ISACA Exam &amp; Multi-PDF Bank</title>
 
   <!-- Google Fonts: Inter & JetBrains Mono -->
@@ -1182,14 +1183,22 @@
       applyTheme(saved);
     }
 
-    // Utility: Toast Notification (never uses alert)
-    function showToast(message) {
+    // Utility: Toast Notification (supports type: 'success', 'error', 'info')
+    function showToast(message, type = 'info') {
       const container = document.getElementById('toast-container');
       const el = document.createElement('div');
-      el.className = 'pointer-events-auto px-4 py-3 rounded-xl border shadow-xl text-xs sm:text-sm font-medium transition-all duration-300';
+      el.className = 'pointer-events-auto px-4 py-3 rounded-xl border shadow-xl text-xs sm:text-sm font-medium transition-all duration-300 animate-fade-up';
       el.style.backgroundColor = 'var(--bg-card)';
-      el.style.borderColor = 'var(--border-strong)';
       el.style.color = 'var(--text-primary)';
+      
+      if (type === 'success') {
+        el.style.borderColor = 'var(--correct)';
+      } else if (type === 'error') {
+        el.style.borderColor = 'var(--incorrect)';
+      } else {
+        el.style.borderColor = 'var(--border-strong)';
+      }
+      
       el.textContent = message;
       container.appendChild(el);
       setTimeout(() => {
@@ -1223,7 +1232,7 @@
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(customQuestions));
       } catch (err) {
-        showToast('Storage quota warning: could not persist all questions to localStorage.');
+        showToast('Storage quota warning: could not persist all questions to localStorage.', 'error');
       }
     }
 
@@ -1232,6 +1241,13 @@
     }
 
     // Stem Normalization for Deduplication
+    function normalizeStem(str) {
+      return String(str || '')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, ' ')
+        .trim();
+    }
+
     // Merge newly parsed questions into customQuestions with deduplication and domain summary
     function mergeNewQuestions(candidates) {
       const existingStems = new Set(getAllQuestions().map(q => normalizeStem(q.question)));
@@ -1333,7 +1349,7 @@
 
       statusLabel.textContent = `Completed ${files.length} file(s)`;
       const domBreakdown = [1, 2, 3, 4, 5].map(d => `D${d}:${totalDomainAdds[d]}`).join(' ');
-      showToast(`Added ${totalAdded} new questions (${domBreakdown}) • ${totalDupes} dupes skipped.`);
+      showToast(`Added ${totalAdded} new questions (${domBreakdown}) • ${totalDupes} dupes skipped.`, 'success');
     }
 
     // Refresh Header Pill & Modal Inventory Counts
@@ -1358,7 +1374,7 @@
 
     function updateMatchingPoolCount() {
       const pool = getFilteredPool();
-      document.getElementById('matching-pool-badge').textContent = `${pool.length} available`;
+      document.getElementById('matching-pool-badge').textContent = `${pool.length} matching question${pool.length === 1 ? '' : 's'}`;
     }
 
     // Automatic ISACA Domain Classifier (Domains 1-5)
@@ -1669,172 +1685,6 @@
       return fullText;
     }
 
-    // Merge newly parsed questions into customQuestions with deduplication
-    function mergeNewQuestions(candidates) {
-      const existingStems = new Set(getAllQuestions().map(q => normalizeStem(q.question)));
-      let added = 0;
-      let duplicates = 0;
-
-      for (const q of candidates) {
-        const norm = normalizeStem(q.question);
-        if (!norm || existingStems.has(norm)) {
-          duplicates++;
-          continue;
-        }
-        existingStems.add(norm);
-        customQuestions.push(q);
-        added++;
-      }
-
-      if (added > 0) {
-        saveCustomBank();
-      }
-      refreshBankUI();
-      return { added, duplicates };
-    }
-
-    // Handle Multi-File Upload (PDF, TXT, JSON)
-    async function handleFilesUpload(fileList) {
-      const files = Array.from(fileList || []);
-      if (!files.length) return;
-
-      const progressBox = document.getElementById('import-progress-box');
-      const statusLabel = document.getElementById('import-status-label');
-      const countLabel = document.getElementById('import-count-label');
-      const progressBar = document.getElementById('import-progress-bar');
-      const fileLog = document.getElementById('import-file-log');
-
-      progressBox.classList.remove('hidden');
-      fileLog.innerHTML = '';
-      progressBar.style.width = '5%';
-
-      let totalAdded = 0;
-      let totalDupes = 0;
-
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        statusLabel.textContent = `Processing (${i + 1}/${files.length}): ${file.name}`;
-        const pct = Math.round(((i + 0.3) / files.length) * 100);
-        progressBar.style.width = `${pct}%`;
-
-        try {
-          let parsedFromFile = [];
-          const lowerName = file.name.toLowerCase();
-
-          if (lowerName.endsWith('.pdf')) {
-            const buffer = await file.arrayBuffer();
-            const extractedText = await extractTextFromPdfBuffer(buffer);
-            parsedFromFile = parseCisaRawText(extractedText, file.name);
-          } else if (lowerName.endsWith('.json')) {
-            const text = await file.text();
-            const json = JSON.parse(text);
-            const arr = Array.isArray(json) ? json : (json.questions || json.answeredQuestions || []);
-            parsedFromFile = arr
-              .filter(item => item && item.question && Array.isArray(item.options) && typeof item.answer === 'number')
-              .map(item => ({
-                id: `imp-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-                domain: [1, 2, 3, 4, 5].includes(item.domain) ? item.domain : classifyDomain(item.question, '', item.explanation || ''),
-                source: 'imported',
-                originFile: file.name,
-                question: item.question.trim(),
-                options: item.options.map(o => String(o).trim()),
-                answer: item.answer,
-                explanation: item.explanation || 'Imported JSON question.'
-              }));
-          } else {
-            const text = await file.text();
-            parsedFromFile = parseCisaRawText(text, file.name);
-          }
-
-          const { added, duplicates } = mergeNewQuestions(parsedFromFile);
-          totalAdded += added;
-          totalDupes += duplicates;
-
-          const row = document.createElement('div');
-          row.className = 'flex items-center justify-between text-slate-300';
-          row.innerHTML = `<span>✓ ${escapeHtml(file.name)}</span><span class="text-emerald-300">+${added} added (${duplicates} dupes)</span>`;
-          fileLog.appendChild(row);
-        } catch (err) {
-          const row = document.createElement('div');
-          row.className = 'text-rose-300';
-          row.textContent = `✕ ${file.name}: ${err.message || 'Parse error'}`;
-          fileLog.appendChild(row);
-        }
-
-        countLabel.textContent = `+${totalAdded} added`;
-        progressBar.style.width = `${Math.round(((i + 1) / files.length) * 100)}%`;
-      }
-
-      statusLabel.textContent = `Completed ${files.length} file(s)`;
-      showToast(`Imported ${totalAdded} new questions (${totalDupes} duplicates skipped).`, 'success');
-    }
-
-    // Refresh Live Question Bank Counters & Domain Cards
-    function refreshBankUI() {
-      const all = getAllQuestions();
-      const counts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
-      all.forEach(q => {
-        if (counts[q.domain] !== undefined) counts[q.domain]++;
-      });
-
-      document.getElementById('total-bank-count').textContent = all.length;
-      document.getElementById('d1-count').textContent = counts[1];
-      document.getElementById('d2-count').textContent = counts[2];
-      document.getElementById('d3-count').textContent = counts[3];
-      document.getElementById('d4-count').textContent = counts[4];
-      document.getElementById('d5-count').textContent = counts[5];
-
-      document.getElementById('modal-starter-count').textContent = STARTER_QUESTIONS.length;
-      document.getElementById('modal-imported-count').textContent = customQuestions.length;
-      document.getElementById('modal-total-count').textContent = all.length;
-
-      // Render Domain Blueprint Cards
-      const grid = document.getElementById('domain-cards-grid');
-      const accentClasses = {
-        cyan: 'border-cyan-500/25 text-cyan-300 bg-cyan-500/10',
-        indigo: 'border-indigo-500/25 text-indigo-300 bg-indigo-500/10',
-        amber: 'border-amber-500/25 text-amber-300 bg-amber-500/10',
-        emerald: 'border-emerald-500/25 text-emerald-300 bg-emerald-500/10',
-        rose: 'border-rose-500/25 text-rose-300 bg-rose-500/10'
-      };
-
-      grid.innerHTML = Object.values(DOMAINS).map(d => `
-        <div class="glass-card rounded-xl p-4 space-y-2 hover:border-slate-600/70 transition">
-          <div class="flex items-center justify-between">
-            <span class="px-2 py-0.5 rounded text-xs font-mono font-bold border ${accentClasses[d.accent]}">${d.short} • ${d.pct}</span>
-            <span class="text-xs font-mono text-slate-400">${counts[d.id]} Qs</span>
-          </div>
-          <div class="text-xs sm:text-sm font-bold text-white leading-snug">${d.name}</div>
-        </div>
-      `).join('');
-
-      updateMatchingPoolCount();
-    }
-
-    function getFilteredPool() {
-      const domainVal = document.getElementById('cfg-domain').value;
-      const sourceVal = document.getElementById('cfg-source').value;
-
-      let pool = getAllQuestions();
-      if (sourceVal === 'imported') {
-        pool = pool.filter(q => q.source === 'imported');
-      } else if (sourceVal === 'starter') {
-        pool = pool.filter(q => q.source === 'starter');
-      }
-
-      if (domainVal !== 'all') {
-        const targetDom = Number(domainVal);
-        pool = pool.filter(q => q.domain === targetDom);
-      }
-
-      return pool;
-    }
-
-    function updateMatchingPoolCount() {
-      const pool = getFilteredPool();
-      document.getElementById('matching-pool-badge').textContent = `${pool.length} matching question${pool.length === 1 ? '' : 's'}`;
-    }
-
     // Fisher-Yates Shuffle
     function shuffleArray(arr) {
       const copy = [...arr];
@@ -1857,7 +1707,15 @@
 
       // Bucket by domain and sample proportionally (18 / 18 / 12 / 26 / 26%)
       const buckets = { 1: [], 2: [], 3: [], 4: [], 5: [] };
-      pool.forEach(q => buckets[q.domain].push(q));
+      pool.forEach(q => {
+        // Safeguard against invalid or missing domain IDs
+        if (buckets[q.domain]) {
+          buckets[q.domain].push(q);
+        } else {
+          buckets[1].push(q); // Fallback to domain 1
+        }
+      });
+      
       for (const d of [1, 2, 3, 4, 5]) {
         buckets[d] = shuffleArray(buckets[d]);
       }
@@ -1921,7 +1779,7 @@
     function startQuizSession(customList = null) {
       const pool = customList || getFilteredPool();
       if (!pool.length) {
-        showToast('No questions match your current domain filter. Import PDFs or choose All Domains.');
+        showToast('No questions match your current domain filter. Import PDFs or choose All Domains.', 'error');
         return;
       }
 
@@ -1971,7 +1829,7 @@
           updateTimerDisplay();
           if (sessionState.secondsRemaining <= 0) {
             clearInterval(sessionState.timerInterval);
-            showToast('Time expired! Submitting exam automatically.');
+            showToast('Time expired! Submitting exam automatically.', 'error');
             finishExam();
           }
         }, 1000);
@@ -2361,7 +2219,7 @@
       a.click();
       a.remove();
       URL.revokeObjectURL(url);
-      showToast(`Exported ${all.length} questions as JSON.`);
+      showToast(`Exported ${all.length} questions as JSON.`, 'success');
     }
 
     // Event Wiring
@@ -2449,7 +2307,7 @@
       document.getElementById('parse-paste-btn').addEventListener('click', () => {
         const raw = document.getElementById('raw-paste-input').value.trim();
         if (!raw) {
-          showToast('Paste question text or JSON first.');
+          showToast('Paste question text or JSON first.', 'error');
           return;
         }
         try {
@@ -2474,15 +2332,15 @@
           }
 
           if (!parsed.length) {
-            showToast('Could not detect valid CISA questions in pasted text.');
+            showToast('Could not detect valid CISA questions in pasted text.', 'error');
             return;
           }
           const { added, duplicates, domainAdds } = mergeNewQuestions(parsed);
           document.getElementById('raw-paste-input').value = '';
           const domBreakdown = [1, 2, 3, 4, 5].map(d => `D${d}:${domainAdds[d]}`).join(' ');
-          showToast(`Added ${added} new question(s) (${domBreakdown}) • ${duplicates} dupes skipped.`);
+          showToast(`Added ${added} new question(s) (${domBreakdown}) • ${duplicates} dupes skipped.`, 'success');
         } catch (err) {
-          showToast(`Parse error: ${err.message}`);
+          showToast(`Parse error: ${err.message}`, 'error');
         }
       });
 
@@ -2490,7 +2348,7 @@
       document.getElementById('export-bank-btn').addEventListener('click', exportFullBankJson);
       document.getElementById('clear-imported-btn').addEventListener('click', () => {
         if (!customQuestions.length) {
-          showToast('Already using the 35 built-in starter questions.');
+          showToast('Already using the 35 built-in starter questions.', 'info');
           return;
         }
         document.getElementById('clear-confirm-banner').classList.remove('hidden');
@@ -2503,7 +2361,7 @@
         localStorage.removeItem(STORAGE_KEY);
         document.getElementById('clear-confirm-banner').classList.add('hidden');
         refreshBankUI();
-        showToast('Reset complete: 35 built-in starter questions active.');
+        showToast('Reset complete: 35 built-in starter questions active.', 'success');
       });
 
       // Navigator Popover Toggle & Outside Click Close
