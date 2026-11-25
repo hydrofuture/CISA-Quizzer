@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CISA Exam Studio — ISACA Practice &amp; Multi-PDF Bank</title>
+  <title>CISA Practice Studio — ISACA Exam &amp; Multi-PDF Bank</title>
 
   <!-- Google Fonts: Inter & JetBrains Mono -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -14,15 +14,11 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
-      darkMode: 'class',
       theme: {
         extend: {
           fontFamily: {
-            sans: ['Inter', 'system-ui', 'sans-serif'],
+            sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
             mono: ['JetBrains Mono', 'monospace'],
-          },
-          colors: {
-            canvas: '#090d16',
           }
         }
       }
@@ -33,12 +29,72 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 
   <style>
-    :root {
-      --bg-canvas: #090d16;
-      --glass-bg: rgba(17, 24, 39, 0.72);
-      --glass-bg-elevated: rgba(23, 32, 51, 0.84);
-      --glass-border: rgba(148, 163, 184, 0.14);
-      --glass-border-hover: rgba(34, 211, 238, 0.35);
+    /* Theme Tokens: Dark (Default), Light, and Monochrome Grayscale */
+    :root,
+    [data-theme="dark"] {
+      --bg-app: #0c1017;
+      --bg-card: #141a24;
+      --bg-recessed: #1b2332;
+      --bg-recessed-hover: #232d40;
+      --border-subtle: rgba(255, 255, 255, 0.09);
+      --border-strong: rgba(255, 255, 255, 0.18);
+      --text-primary: #f1f5f9;
+      --text-secondary: #94a3b8;
+      --accent: #3b82f6;
+      --accent-fg: #ffffff;
+      --accent-soft: rgba(59, 130, 246, 0.14);
+      --correct: #10b981;
+      --correct-soft: rgba(16, 185, 129, 0.14);
+      --incorrect: #f43f5e;
+      --incorrect-soft: rgba(244, 63, 94, 0.14);
+      --qualifier-bg: rgba(245, 158, 11, 0.16);
+      --qualifier-border: rgba(245, 158, 11, 0.45);
+      --qualifier-text: #fcd34d;
+      --card-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.55);
+    }
+
+    [data-theme="light"] {
+      --bg-app: #f8fafc;
+      --bg-card: #ffffff;
+      --bg-recessed: #f1f5f9;
+      --bg-recessed-hover: #e2e8f0;
+      --border-subtle: #e2e8f0;
+      --border-strong: #cbd5e1;
+      --text-primary: #0f172a;
+      --text-secondary: #475569;
+      --accent: #2563eb;
+      --accent-fg: #ffffff;
+      --accent-soft: rgba(37, 99, 235, 0.1);
+      --correct: #059669;
+      --correct-soft: rgba(5, 150, 105, 0.1);
+      --incorrect: #e11d48;
+      --incorrect-soft: rgba(225, 29, 72, 0.1);
+      --qualifier-bg: #fef3c7;
+      --qualifier-border: #f59e0b;
+      --qualifier-text: #92400e;
+      --card-shadow: 0 8px 24px -8px rgba(15, 23, 42, 0.08);
+    }
+
+    [data-theme="grayscale"] {
+      --bg-app: #111111;
+      --bg-card: #1a1a1a;
+      --bg-recessed: #252525;
+      --bg-recessed-hover: #303030;
+      --border-subtle: #383838;
+      --border-strong: #5c5c5c;
+      --text-primary: #f5f5f5;
+      --text-secondary: #a3a3a3;
+      --accent: #ffffff;
+      --accent-fg: #111111;
+      --accent-soft: rgba(255, 255, 255, 0.12);
+      --correct: #ffffff;
+      --correct-soft: rgba(255, 255, 255, 0.14);
+      --incorrect: #a3a3a3;
+      --incorrect-soft: rgba(255, 255, 255, 0.04);
+      --qualifier-bg: rgba(255, 255, 255, 0.12);
+      --qualifier-border: #888888;
+      --qualifier-text: #ffffff;
+      --card-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.7);
     }
 
     * {
@@ -48,522 +104,442 @@
     html, body {
       margin: 0;
       padding: 0;
-      background-color: var(--bg-canvas);
-      color: #f1f5f9;
-      font-family: 'Inter', system-ui, sans-serif;
+      background-color: var(--bg-app);
+      color: var(--text-primary);
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
       overflow-x: hidden;
       min-height: 100vh;
+      transition: background-color 0.2s ease, color 0.2s ease;
     }
 
-    /* Ambient deep-slate radial lighting */
-    body::before {
-      content: "";
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      z-index: 0;
-      background:
-        radial-gradient(circle at 12% 10%, rgba(34, 211, 238, 0.08), transparent 36%),
-        radial-gradient(circle at 88% 15%, rgba(99, 102, 241, 0.09), transparent 40%),
-        radial-gradient(circle at 50% 92%, rgba(16, 185, 129, 0.05), transparent 42%);
+    [data-theme="grayscale"] #app-shell {
+      filter: grayscale(100%);
     }
 
-    .glass-card {
-      background: var(--glass-bg);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border: 1px solid var(--glass-border);
-      box-shadow: 0 12px 36px -8px rgba(0, 0, 0, 0.55);
+    .surface-card {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      box-shadow: var(--card-shadow);
+      transition: background-color 0.2s ease, border-color 0.2s ease;
     }
 
-    .glass-elevated {
-      background: var(--glass-bg-elevated);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      border: 1px solid rgba(148, 163, 184, 0.18);
+    .surface-recessed {
+      background-color: var(--bg-recessed);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-primary);
+      transition: background-color 0.16s ease, border-color 0.16s ease;
     }
 
+    .surface-recessed:hover:not(:disabled) {
+      background-color: var(--bg-recessed-hover);
+      border-color: var(--border-strong);
+    }
+
+    .btn-primary {
+      background-color: var(--accent);
+      color: var(--accent-fg);
+      transition: opacity 0.16s ease, transform 0.12s ease;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      opacity: 0.92;
+    }
+
+    .theme-seg-btn {
+      color: var(--text-secondary);
+      transition: all 0.15s ease;
+    }
+
+    .theme-seg-btn.active {
+      background-color: var(--accent);
+      color: var(--accent-fg);
+      font-weight: 700;
+    }
+
+    /* Quiz Answer Options */
     .option-btn {
-      background: rgba(15, 23, 42, 0.68);
-      border: 1px solid rgba(148, 163, 184, 0.16);
-      transition: all 0.16s cubic-bezier(0.16, 1, 0.3, 1);
+      background-color: var(--bg-recessed);
+      border: 1.5px solid var(--border-subtle);
+      color: var(--text-primary);
+      transition: all 0.15s ease;
     }
 
     .option-btn:hover:not(:disabled) {
-      border-color: rgba(34, 211, 238, 0.45);
-      background: rgba(30, 41, 59, 0.85);
-      transform: translateY(-1px);
+      background-color: var(--bg-recessed-hover);
+      border-color: var(--accent);
     }
 
     .option-selected {
-      border-color: rgba(34, 211, 238, 0.85) !important;
-      background: rgba(34, 211, 238, 0.12) !important;
-      box-shadow: 0 0 0 1px rgba(34, 211, 238, 0.35);
+      border-color: var(--accent) !important;
+      background-color: var(--accent-soft) !important;
     }
 
     .option-correct {
-      border-color: rgba(52, 211, 153, 0.85) !important;
-      background: rgba(16, 185, 129, 0.14) !important;
-      box-shadow: 0 0 0 1px rgba(52, 211, 153, 0.35);
+      border: 2px solid var(--correct) !important;
+      background-color: var(--correct-soft) !important;
     }
 
     .option-wrong {
-      border-color: rgba(251, 113, 133, 0.85) !important;
-      background: rgba(244, 63, 94, 0.14) !important;
-      box-shadow: 0 0 0 1px rgba(251, 113, 133, 0.35);
+      border: 2px solid var(--incorrect) !important;
+      background-color: var(--incorrect-soft) !important;
+    }
+
+    /* High-contrast dashed border distinction for incorrect answers in Grayscale mode */
+    [data-theme="grayscale"] .option-wrong {
+      border-style: dashed !important;
     }
 
     .qualifier-pill {
       display: inline-block;
       padding: 0 0.35rem;
       margin: 0 0.05rem;
-      border-radius: 0.375rem;
-      background: rgba(251, 191, 36, 0.18);
-      border: 1px solid rgba(251, 191, 36, 0.48);
-      color: #fde68a;
+      border-radius: 0.35rem;
+      background-color: var(--qualifier-bg);
+      border: 1px solid var(--qualifier-border);
+      color: var(--qualifier-text);
       font-weight: 700;
+      font-size: 0.92em;
       letter-spacing: 0.02em;
     }
 
-    /* Custom subtle scrollbar */
+    /* Clean scrollbar */
     ::-webkit-scrollbar {
       width: 6px;
       height: 6px;
     }
     ::-webkit-scrollbar-track {
-      background: rgba(15, 23, 42, 0.5);
+      background: transparent;
     }
     ::-webkit-scrollbar-thumb {
-      background: rgba(148, 163, 184, 0.25);
+      background: var(--border-strong);
       border-radius: 9999px;
-    }
-    ::-webkit-scrollbar-thumb:hover {
-      background: rgba(34, 211, 238, 0.45);
     }
 
     @keyframes fadeSlideUp {
-      from { opacity: 0; transform: translateY(8px); }
+      from { opacity: 0; transform: translateY(6px); }
       to { opacity: 1; transform: translateY(0); }
     }
     .animate-fade-up {
-      animation: fadeSlideUp 0.24s ease-out forwards;
+      animation: fadeSlideUp 0.2s ease-out forwards;
     }
   </style>
 </head>
-<body class="relative antialiased selection:bg-cyan-500/30 selection:text-cyan-100">
+<body class="antialiased">
 
-  <!-- Toast Notification Container -->
-  <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none px-4 sm:px-0"></div>
+  <div id="app-shell" class="min-h-screen flex flex-col">
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none px-4 sm:px-0"></div>
 
-  <!-- Top Navigation Header -->
-  <header class="sticky top-0 z-30 glass-card border-x-0 border-t-0">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3.5 flex flex-wrap items-center justify-between gap-3">
-      <!-- Brand Identity -->
-      <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-400/20 via-indigo-500/20 to-emerald-400/20 border border-cyan-400/30 flex items-center justify-center shadow-inner">
-          <svg class="w-5 h-5 text-cyan-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
-          </svg>
-        </div>
-        <div>
-          <div class="flex items-center gap-2">
-            <h1 class="text-base sm:text-lg font-extrabold tracking-tight text-white">CISA Exam Studio</h1>
-            <span class="hidden sm:inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-mono font-semibold bg-indigo-500/15 text-indigo-300 border border-indigo-400/25">
-              ISACA 5-DOMAIN
-            </span>
-          </div>
-          <p class="text-xs text-slate-400 hidden sm:block">Certified Information Systems Auditor • Adaptive Exam &amp; Multi-PDF Bank</p>
-        </div>
-      </div>
-
-      <!-- Live Question Bank Counter Pill & Bank Manager Toggle -->
-      <div class="flex items-center gap-2.5 sm:gap-3 flex-wrap">
-        <div id="bank-counter-pill" class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900/90 border border-slate-700/70 text-xs font-mono">
-          <span class="flex items-center gap-1.5 text-cyan-300 font-semibold">
-            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-            <span id="total-bank-count">30</span> Qs
-          </span>
-          <span class="text-slate-600">|</span>
-          <div class="hidden md:flex items-center gap-1.5 text-[11px] text-slate-300">
-            <span title="Domain 1: IS Auditing Process" class="px-1.5 py-0.5 rounded bg-cyan-500/10 text-cyan-300 border border-cyan-500/20">D1:<b id="d1-count">6</b></span>
-            <span title="Domain 2: Governance & Management of IT" class="px-1.5 py-0.5 rounded bg-indigo-500/10 text-indigo-300 border border-indigo-500/20">D2:<b id="d2-count">6</b></span>
-            <span title="Domain 3: IS Acquisition, Development & Implementation" class="px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-300 border border-amber-500/20">D3:<b id="d3-count">6</b></span>
-            <span title="Domain 4: IS Operations & Business Resilience" class="px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">D4:<b id="d4-count">6</b></span>
-            <span title="Domain 5: Protection of Information Assets" class="px-1.5 py-0.5 rounded bg-rose-500/10 text-rose-300 border border-rose-500/20">D5:<b id="d5-count">6</b></span>
-          </div>
-        </div>
-
-        <button id="open-importer-btn" type="button"
-          class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-gradient-to-r from-cyan-500 to-indigo-500 hover:from-cyan-400 hover:to-indigo-400 text-slate-950 shadow-lg shadow-cyan-500/20 transition cursor-pointer">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.233-2.33 3 3 0 013.758 3.848A3.752 3.752 0 0118 19.5H6.75z" />
-          </svg>
-          <span>Import PDFs / Manage Bank</span>
-        </button>
-      </div>
-    </div>
-  </header>
-
-  <!-- Main Workspace -->
-  <main class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
-
-    <!-- VIEW 1: EXAM CONFIGURATION LOBBY -->
-    <section id="setup-view" class="animate-fade-up space-y-6">
-      <!-- Hero Banner -->
-      <div class="glass-card rounded-2xl p-6 sm:p-8 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-        <div class="space-y-2.5 max-w-2xl">
-          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono bg-cyan-500/10 text-cyan-300 border border-cyan-400/25">
-            <span>2024/2026 ISACA CISA Blueprint</span>
-            <span>•</span>
-            <span>Passing Scaled Score: 450 / 800</span>
-          </div>
-          <h2 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
-            Master the IS Auditor Mindset
-          </h2>
-          <p class="text-sm sm:text-base text-slate-300 leading-relaxed">
-            Practice with built-in high-yield ISACA questions or drag-and-drop your CISA PDF question dumps to auto-parse, deduplicate, and classify hundreds of questions into a persistent local bank.
-          </p>
-        </div>
-
-        <div class="flex flex-col sm:flex-row lg:flex-col gap-3 shrink-0">
-          <button id="quick-drop-cta" type="button"
-            class="px-4 py-3 rounded-xl glass-elevated hover:border-cyan-400/50 text-left flex items-center gap-3 transition cursor-pointer group">
-            <div class="w-10 h-10 rounded-lg bg-cyan-500/15 border border-cyan-400/30 flex items-center justify-center text-cyan-300 group-hover:scale-105 transition">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m3.75 9v6m3-3H9m1.5-12H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-              </svg>
-            </div>
-            <div>
-              <div class="text-sm font-bold text-white">Load CISA PDF Dumps</div>
-              <div class="text-xs text-slate-400">Batch drop 0–400+ PDF files in browser</div>
-            </div>
-          </button>
-        </div>
-      </div>
-
-      <!-- Domain Blueprint Overview Cards -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5" id="domain-cards-grid">
-        <!-- Populated by JS -->
-      </div>
-
-      <!-- Configuration Grid -->
-      <div class="glass-card rounded-2xl p-6 sm:p-7 space-y-6">
-        <div class="flex items-center justify-between border-b border-slate-800 pb-4">
-          <div>
-            <h3 class="text-lg font-bold text-white">Configure Practice Session</h3>
-            <p class="text-xs text-slate-400">Customize domain weighting, source pool, exam simulation mode, and pace timer</p>
-          </div>
-          <span id="matching-pool-badge" class="px-3 py-1 rounded-full text-xs font-mono bg-emerald-500/15 text-emerald-300 border border-emerald-400/25">
-            30 matching questions
+    <!-- Minimal Top Header -->
+    <header class="sticky top-0 z-30 border-b" style="background-color: var(--bg-card); border-color: var(--border-subtle);">
+      <div class="max-w-3xl mx-auto px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3">
+        <!-- Title & Compact Question Count Pill -->
+        <div class="flex items-center gap-2.5">
+          <h1 class="text-base sm:text-lg font-extrabold tracking-tight" style="color: var(--text-primary);">
+            CISA Practice Studio
+          </h1>
+          <span id="bank-count-pill" class="px-2.5 py-0.5 rounded-full text-xs font-mono font-semibold" style="background-color: var(--bg-recessed); color: var(--text-secondary); border: 1px solid var(--border-subtle);">
+            35 questions
           </span>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-          <!-- Domain Filter -->
-          <div class="space-y-2">
-            <label for="cfg-domain" class="block text-xs font-semibold uppercase tracking-wider text-slate-400">Target Domain</label>
-            <select id="cfg-domain" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900/90 border border-slate-700/80 text-sm text-white focus:outline-none focus:border-cyan-400">
-              <option value="all">All Domains — Exam Weighted (18/18/12/26/26%)</option>
-              <option value="1">Domain 1 — IS Auditing Process (18%)</option>
-              <option value="2">Domain 2 — Governance &amp; Mgmt of IT (18%)</option>
-              <option value="3">Domain 3 — IS Acquisition &amp; Dev (12%)</option>
-              <option value="4">Domain 4 — IS Ops &amp; Resilience (26%)</option>
-              <option value="5">Domain 5 — Protection of Info Assets (26%)</option>
-            </select>
+        <!-- Theme Switcher + Import Button -->
+        <div class="flex items-center gap-2.5 flex-wrap">
+          <!-- 3-Mode Segmented Pill Toggle -->
+          <div role="group" aria-label="Color Theme" class="inline-flex p-0.5 rounded-xl border text-xs font-medium" style="background-color: var(--bg-recessed); border-color: var(--border-subtle);">
+            <button type="button" data-theme-choice="dark" class="theme-seg-btn px-2.5 py-1 rounded-lg cursor-pointer">Dark</button>
+            <button type="button" data-theme-choice="light" class="theme-seg-btn px-2.5 py-1 rounded-lg cursor-pointer">Light</button>
+            <button type="button" data-theme-choice="grayscale" class="theme-seg-btn px-2.5 py-1 rounded-lg cursor-pointer">Grayscale</button>
           </div>
 
-          <!-- Source Filter -->
-          <div class="space-y-2">
-            <label for="cfg-source" class="block text-xs font-semibold uppercase tracking-wider text-slate-400">Question Source</label>
-            <select id="cfg-source" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900/90 border border-slate-700/80 text-sm text-white focus:outline-none focus:border-cyan-400">
-              <option value="all">All Questions (Starter + Imported)</option>
-              <option value="imported">Imported PDFs / Custom Only</option>
-              <option value="starter">Built-In Starter Bank Only (30)</option>
-            </select>
-          </div>
-
-          <!-- Session Length -->
-          <div class="space-y-2">
-            <label for="cfg-length" class="block text-xs font-semibold uppercase tracking-wider text-slate-400">Session Length</label>
-            <select id="cfg-length" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900/90 border border-slate-700/80 text-sm text-white focus:outline-none focus:border-cyan-400">
-              <option value="10">10 Questions (Quick Drill)</option>
-              <option value="25" selected>25 Questions (Standard Set)</option>
-              <option value="50">50 Questions (Deep Practice)</option>
-              <option value="100">100 Questions (Endurance Run)</option>
-              <option value="150">150 Questions (Full CISA Exam)</option>
-              <option value="all">All Available Matching Questions</option>
-            </select>
-          </div>
-
-          <!-- Delivery Mode -->
-          <div class="space-y-2">
-            <label for="cfg-mode" class="block text-xs font-semibold uppercase tracking-wider text-slate-400">Feedback Mode</label>
-            <select id="cfg-mode" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900/90 border border-slate-700/80 text-sm text-white focus:outline-none focus:border-cyan-400">
-              <option value="study">Study Mode — Instant Feedback</option>
-              <option value="exam">Exam Simulation — Blind Until Submit</option>
-            </select>
-          </div>
-        </div>
-
-        <!-- Toggles Row -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-1">
-          <label class="flex items-center justify-between p-3.5 rounded-xl bg-slate-900/70 border border-slate-800 hover:border-slate-700 cursor-pointer">
-            <div>
-              <div class="text-sm font-semibold text-white">Shuffle Answer Options</div>
-              <div class="text-xs text-slate-400">Randomize A–D order to prevent memorization</div>
-            </div>
-            <input id="cfg-shuffle-opts" type="checkbox" checked class="w-4 h-4 accent-cyan-400 rounded cursor-pointer" />
-          </label>
-
-          <label class="flex items-center justify-between p-3.5 rounded-xl bg-slate-900/70 border border-slate-800 hover:border-slate-700 cursor-pointer">
-            <div>
-              <div class="text-sm font-semibold text-white">Highlight Exam Qualifiers</div>
-              <div class="text-xs text-slate-400">Spotlight FIRST, BEST, MOST, GREATEST, LEAST</div>
-            </div>
-            <input id="cfg-highlight" type="checkbox" checked class="w-4 h-4 accent-amber-400 rounded cursor-pointer" />
-          </label>
-
-          <label class="flex items-center justify-between p-3.5 rounded-xl bg-slate-900/70 border border-slate-800 hover:border-slate-700 cursor-pointer">
-            <div>
-              <div class="text-sm font-semibold text-white">96s / Question Pace Timer</div>
-              <div class="text-xs text-slate-400">Official 4-hr / 150-Q ISACA exam cadence</div>
-            </div>
-            <input id="cfg-timer" type="checkbox" class="w-4 h-4 accent-indigo-400 rounded cursor-pointer" />
-          </label>
-        </div>
-
-        <!-- Start Button -->
-        <div class="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2 border-t border-slate-800/80">
-          <div class="text-xs text-slate-400 font-mono">
-            Shortcuts: <span class="text-slate-200">[A–D / 1–4]</span> Answer • <span class="text-slate-200">[← / →]</span> Navigate • <span class="text-slate-200">[F]</span> Flag • <span class="text-slate-200">[H]</span> Qualifiers
-          </div>
-          <button id="start-quiz-btn" type="button"
-            class="w-full sm:w-auto px-7 py-3.5 rounded-xl font-bold text-sm bg-gradient-to-r from-cyan-400 via-sky-400 to-indigo-500 hover:from-cyan-300 hover:to-indigo-400 text-slate-950 shadow-lg shadow-cyan-500/25 transition cursor-pointer flex items-center justify-center gap-2">
-            <span>Launch CISA Practice Session</span>
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-            </svg>
+          <button id="open-importer-btn" type="button"
+            class="btn-primary px-3 py-1.5 rounded-xl text-xs font-semibold cursor-pointer shadow-sm">
+            + Import PDFs
           </button>
         </div>
       </div>
-    </section>
+    </header>
 
-    <!-- VIEW 2: ACTIVE QUIZ ENGINE -->
-    <section id="quiz-view" class="hidden animate-fade-up space-y-5">
-      <!-- Top Session Telemetry Bar -->
-      <div class="glass-card rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3">
-        <div class="flex items-center gap-3 flex-wrap">
-          <button id="quit-session-btn" type="button"
-            class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800/90 hover:bg-slate-700 text-slate-300 border border-slate-700 transition cursor-pointer">
-            ← Exit to Setup
-          </button>
-          <span id="quiz-mode-badge" class="px-2.5 py-1 rounded-lg text-xs font-mono font-semibold bg-cyan-500/15 text-cyan-300 border border-cyan-400/25">
-            STUDY MODE
-          </span>
-          <span class="text-xs sm:text-sm font-mono text-slate-300">
-            Question <strong id="q-current-num" class="text-white">1</strong> of <strong id="q-total-num" class="text-white">25</strong>
-          </span>
-        </div>
+    <!-- Main Centered Workspace (max-width: 760px) -->
+    <main class="flex-1 w-full max-w-[760px] mx-auto px-4 sm:px-6 py-6 sm:py-10">
 
-        <div class="flex items-center gap-3 flex-wrap">
-          <!-- Optional Pace Timer -->
-          <div id="timer-box" class="hidden items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-900/90 border border-amber-400/30 font-mono text-xs text-amber-300">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <span id="timer-display">00:00</span>
-          </div>
-
-          <button id="toggle-highlight-live" type="button"
-            class="px-2.5 py-1.5 rounded-lg text-xs font-mono bg-amber-500/15 text-amber-200 border border-amber-400/30 hover:bg-amber-500/25 transition cursor-pointer"
-            title="Toggle Qualifier Highlights (H)">
-            Qualifiers: ON
-          </button>
-
-          <button id="finish-exam-btn" type="button"
-            class="px-3.5 py-1.5 rounded-lg text-xs font-bold bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition cursor-pointer">
-            Submit &amp; Score
-          </button>
-        </div>
-      </div>
-
-      <!-- Progress Bar -->
-      <div class="w-full h-2 rounded-full bg-slate-900/90 overflow-hidden border border-slate-800">
-        <div id="quiz-progress-bar" class="h-full bg-gradient-to-r from-cyan-400 to-indigo-500 transition-all duration-300" style="width: 4%"></div>
-      </div>
-
-      <!-- Main Question + Navigator Layout -->
-      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        <!-- Left 8 Cols: Question Card -->
-        <div class="lg:col-span-8 glass-card rounded-2xl p-5 sm:p-7 space-y-6">
-          <!-- Domain & Source Metadata + Flag Button -->
-          <div class="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-800/90">
-            <div class="flex items-center gap-2 flex-wrap">
-              <span id="q-domain-badge" class="px-2.5 py-1 rounded-lg text-xs font-mono font-semibold bg-indigo-500/15 text-indigo-300 border border-indigo-400/25">
-                Domain 1 • IS Auditing Process
+      <!-- VIEW 1: SETUP VIEW (SINGLE CENTERED CARD) -->
+      <section id="setup-view" class="animate-fade-up">
+        <div class="surface-card rounded-2xl p-6 sm:p-8 space-y-6">
+          <div class="space-y-1.5">
+            <div class="flex items-center justify-between gap-2 flex-wrap">
+              <span class="text-xs font-mono uppercase tracking-wider font-semibold" style="color: var(--accent);">
+                ISACA CISA Blueprint • Passing Score 450/800
               </span>
-              <span id="q-source-badge" class="px-2 py-0.5 rounded text-[11px] font-mono bg-slate-800 text-slate-400 border border-slate-700">
-                Starter Bank
+              <span id="matching-pool-badge" class="text-xs font-mono" style="color: var(--text-secondary);">
+                35 available
               </span>
             </div>
-
-            <button id="flag-question-btn" type="button"
-              class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-900/90 border border-slate-700 text-slate-300 hover:border-amber-400/50 transition cursor-pointer">
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M3 3v1.5M3 21v-6m0 0l2.77-.693a9 9 0 016.208.682l.108.054a9 9 0 006.086.71l3.114-.732a48.524 48.524 0 01-.005-10.499l-3.11.732a9 9 0 01-6.085-.711l-.108-.054a9 9 0 00-6.208-.682L3 4.5M3 15V4.5" />
-              </svg>
-              <span id="flag-btn-label">Flag for Review</span>
-            </button>
+            <h2 class="text-xl sm:text-2xl font-extrabold tracking-tight" style="color: var(--text-primary);">
+              Start a Practice Session
+            </h2>
+            <p class="text-sm leading-relaxed" style="color: var(--text-secondary);">
+              Train with official domain weighting or import your own CISA PDF question banks for offline study.
+            </p>
           </div>
 
-          <!-- Question Stem -->
-          <div id="q-stem" class="text-base sm:text-lg font-medium text-slate-100 leading-relaxed"></div>
-
-          <!-- Options List -->
-          <div id="q-options" class="space-y-3"></div>
-
-          <!-- Study Mode Instant Rationale Panel -->
-          <div id="q-explanation-box" class="hidden rounded-xl p-4 sm:p-5 bg-slate-900/90 border border-cyan-500/30 space-y-2">
-            <div class="flex items-center gap-2 text-xs font-mono font-bold uppercase tracking-wider text-cyan-300">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 001.5-.189m-1.5.189a6.01 6.01 0 01-1.5-.189m3.75 7.478a12.06 12.06 0 01-4.5 0m3.75 2.383a14.406 14.406 0 01-3 0M14.25 18v-.192c0-.983.658-1.823 1.508-2.316a7.5 7.5 0 10-7.517 0c.85.493 1.509 1.333 1.509 2.316V18" />
-              </svg>
-              <span>ISACA Auditor Rationale</span>
+          <div class="space-y-4">
+            <!-- Domain Selector Dropdown -->
+            <div class="space-y-1.5">
+              <label for="cfg-domain" class="block text-xs font-semibold uppercase tracking-wider" style="color: var(--text-secondary);">
+                Domain Focus
+              </label>
+              <select id="cfg-domain" class="w-full px-3.5 py-2.5 rounded-xl text-sm font-medium focus:outline-none" style="background-color: var(--bg-recessed); border: 1px solid var(--border-subtle); color: var(--text-primary);">
+                <option value="all">All Domains (Exam Blueprint Weighted)</option>
+                <option value="1">Domain 1: IS Auditing Process (18%)</option>
+                <option value="2">Domain 2: Governance &amp; Management of IT (18%)</option>
+                <option value="3">Domain 3: IS Acquisition, Development &amp; Implementation (12%)</option>
+                <option value="4">Domain 4: IS Operations &amp; Business Resilience (26%)</option>
+                <option value="5">Domain 5: Protection of Information Assets (26%)</option>
+              </select>
             </div>
-            <p id="q-explanation-text" class="text-sm text-slate-300 leading-relaxed"></p>
+
+            <!-- Two-Column Row: Session Size & Mode -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div class="space-y-1.5">
+                <label for="cfg-length" class="block text-xs font-semibold uppercase tracking-wider" style="color: var(--text-secondary);">
+                  Session Size
+                </label>
+                <select id="cfg-length" class="w-full px-3.5 py-2.5 rounded-xl text-sm font-medium focus:outline-none" style="background-color: var(--bg-recessed); border: 1px solid var(--border-subtle); color: var(--text-primary);">
+                  <option value="10">10 Questions</option>
+                  <option value="25" selected>25 Questions</option>
+                  <option value="50">50 Questions</option>
+                  <option value="100">100 Questions</option>
+                  <option value="all">All Matching Questions</option>
+                </select>
+              </div>
+
+              <div class="space-y-1.5">
+                <label for="cfg-mode" class="block text-xs font-semibold uppercase tracking-wider" style="color: var(--text-secondary);">
+                  Mode
+                </label>
+                <select id="cfg-mode" class="w-full px-3.5 py-2.5 rounded-xl text-sm font-medium focus:outline-none" style="background-color: var(--bg-recessed); border: 1px solid var(--border-subtle); color: var(--text-primary);">
+                  <option value="study">Study Mode — Instant Rationale</option>
+                  <option value="exam">Exam Sim — Scored at End</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Subtle Inline Checkboxes -->
+            <div class="flex flex-wrap items-center gap-x-6 gap-y-2.5 pt-1">
+              <label class="inline-flex items-center gap-2 text-sm cursor-pointer select-none" style="color: var(--text-primary);">
+                <input id="cfg-highlight" type="checkbox" checked class="w-4 h-4 rounded cursor-pointer" style="accent-color: var(--accent);" />
+                <span>Highlight ISACA keywords</span>
+              </label>
+
+              <label class="inline-flex items-center gap-2 text-sm cursor-pointer select-none" style="color: var(--text-primary);">
+                <input id="cfg-timer" type="checkbox" class="w-4 h-4 rounded cursor-pointer" style="accent-color: var(--accent);" />
+                <span>Pace timer (96s/q)</span>
+              </label>
+            </div>
           </div>
 
-          <!-- Bottom Navigation Controls -->
-          <div class="flex items-center justify-between pt-4 border-t border-slate-800">
-            <button id="prev-q-btn" type="button"
-              class="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold bg-slate-800/90 hover:bg-slate-700 disabled:opacity-40 text-white border border-slate-700 transition cursor-pointer">
-              ← Previous
+          <!-- Primary CTA + Secondary Link -->
+          <div class="pt-2 space-y-3">
+            <button id="start-quiz-btn" type="button"
+              class="btn-primary w-full py-3.5 px-6 rounded-xl font-bold text-sm sm:text-base cursor-pointer shadow-sm">
+              Start Practice
             </button>
 
-            <span id="answered-status-text" class="text-xs font-mono text-slate-400">0 / 25 Answered</span>
-
-            <button id="next-q-btn" type="button"
-              class="px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-cyan-500 hover:bg-cyan-400 text-slate-950 transition cursor-pointer">
-              Next →
-            </button>
+            <div class="flex items-center justify-between text-xs pt-1" style="color: var(--text-secondary);">
+              <button id="secondary-import-link" type="button" class="underline underline-offset-4 hover:opacity-80 font-medium cursor-pointer" style="color: var(--accent);">
+                Import CISA PDFs / Text
+              </button>
+              <span class="font-mono hidden sm:inline">Keys: [A–D] Answer • [←/→] Nav • [F] Flag</span>
+            </div>
           </div>
         </div>
+      </section>
 
-        <!-- Right 4 Cols: Question Navigator Palette -->
-        <aside class="lg:col-span-4 glass-card rounded-2xl p-5 space-y-4">
-          <div class="flex items-center justify-between">
-            <h3 class="text-sm font-bold text-white">Question Navigator</h3>
-            <span class="text-xs font-mono text-slate-400" id="flagged-count-label">0 Flagged</span>
+      <!-- VIEW 2: ACTIVE QUIZ VIEW (FOCUSED SINGLE-COLUMN CARD) -->
+      <section id="quiz-view" class="hidden animate-fade-up">
+        <div class="surface-card rounded-2xl overflow-hidden relative">
+          <!-- Thin 3px Progress Bar Across Top of Card -->
+          <div class="w-full h-[3px]" style="background-color: var(--bg-recessed);">
+            <div id="quiz-progress-bar" class="h-full transition-all duration-300" style="width: 4%; background-color: var(--accent);"></div>
           </div>
 
-          <div class="flex flex-wrap gap-3 text-[11px] text-slate-400 font-mono">
-            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-sm bg-cyan-400 inline-block"></span> Current</span>
-            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-sm bg-indigo-500/50 border border-indigo-400 inline-block"></span> Answered</span>
-            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-sm bg-amber-400 inline-block"></span> Flagged</span>
+          <div class="p-5 sm:p-8 space-y-6">
+            <!-- Clean Top Metadata Bar -->
+            <div class="flex flex-wrap items-center justify-between gap-2 pb-4 border-b relative" style="border-color: var(--border-subtle);">
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="text-xs sm:text-sm font-mono font-bold" style="color: var(--text-primary);">
+                  Question <span id="q-current-num">1</span> of <span id="q-total-num">25</span>
+                </span>
+                <span class="text-xs" style="color: var(--text-secondary);">•</span>
+                <span id="q-domain-badge" class="px-2 py-0.5 rounded-md text-xs font-mono font-medium" style="background-color: var(--bg-recessed); color: var(--text-secondary); border: 1px solid var(--border-subtle);">
+                  D1 • IS Auditing Process
+                </span>
+              </div>
+
+              <div class="flex items-center gap-2 flex-wrap">
+                <!-- Optional Pace Countdown -->
+                <span id="timer-box" class="hidden px-2.5 py-1 rounded-lg font-mono text-xs font-semibold" style="background-color: var(--bg-recessed); color: var(--text-primary); border: 1px solid var(--border-subtle);">
+                  <span id="timer-display">00:00</span>
+                </span>
+
+                <!-- Flag Toggle Button -->
+                <button id="flag-question-btn" type="button"
+                  class="surface-recessed px-2.5 py-1 rounded-lg text-xs font-semibold cursor-pointer">
+                  <span id="flag-btn-label">Flag</span>
+                </button>
+
+                <!-- Navigator Popover Trigger -->
+                <div class="relative">
+                  <button id="navigator-toggle-btn" type="button"
+                    class="surface-recessed px-2.5 py-1 rounded-lg text-xs font-semibold cursor-pointer">
+                    Navigator
+                  </button>
+
+                  <!-- Compact Floating Navigator Popover -->
+                  <div id="navigator-popover" class="hidden absolute right-0 mt-2 w-64 sm:w-72 p-3.5 rounded-xl z-40 shadow-2xl border" style="background-color: var(--bg-card); border-color: var(--border-strong);">
+                    <div class="flex items-center justify-between pb-2 mb-2.5 border-b text-xs font-mono" style="border-color: var(--border-subtle); color: var(--text-secondary);">
+                      <span>Jump to Question</span>
+                      <span id="flagged-count-label">0 flagged</span>
+                    </div>
+                    <div id="question-nav-grid" class="grid grid-cols-5 gap-1.5 max-h-56 overflow-y-auto"></div>
+                  </div>
+                </div>
+
+                <!-- Finish Button -->
+                <button id="finish-exam-btn" type="button"
+                  class="btn-primary px-3 py-1 rounded-lg text-xs font-bold cursor-pointer">
+                  Finish
+                </button>
+              </div>
+            </div>
+
+            <!-- Question Stem -->
+            <div id="q-stem" class="text-base sm:text-[17px] font-medium leading-relaxed" style="color: var(--text-primary);"></div>
+
+            <!-- Option Buttons -->
+            <div id="q-options" class="space-y-2.5"></div>
+
+            <!-- Study Mode Instant Rationale Panel -->
+            <div id="q-explanation-box" class="hidden rounded-xl p-4 sm:p-5 space-y-1.5 border" style="background-color: var(--bg-recessed); border-color: var(--border-strong);">
+              <div class="text-xs font-mono font-bold uppercase tracking-wider" style="color: var(--accent);">
+                Rationale
+              </div>
+              <p id="q-explanation-text" class="text-sm leading-relaxed" style="color: var(--text-secondary);"></p>
+            </div>
+
+            <!-- Simple Bottom Bar: Previous, Skip, Next -->
+            <div class="flex items-center justify-between pt-4 border-t" style="border-color: var(--border-subtle);">
+              <button id="prev-q-btn" type="button"
+                class="surface-recessed px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold disabled:opacity-40 cursor-pointer">
+                ← Previous
+              </button>
+
+              <button id="skip-q-btn" type="button"
+                class="px-3 py-2 rounded-xl text-xs sm:text-sm font-medium hover:opacity-80 cursor-pointer" style="color: var(--text-secondary);">
+                Skip
+              </button>
+
+              <button id="next-q-btn" type="button"
+                class="btn-primary px-5 py-2 rounded-xl text-xs sm:text-sm font-bold cursor-pointer">
+                Next →
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW 3: RESULTS & REVIEW VIEW -->
+      <section id="results-view" class="hidden animate-fade-up space-y-6">
+        <!-- Summary Score Card -->
+        <div class="surface-card rounded-2xl p-6 sm:p-8 space-y-6">
+          <div class="flex flex-wrap items-start justify-between gap-4 border-b pb-5" style="border-color: var(--border-subtle);">
+            <div class="space-y-1.5">
+              <span id="result-pass-badge" class="inline-block px-2.5 py-0.5 rounded-full text-xs font-mono font-bold" style="background-color: var(--correct-soft); color: var(--correct); border: 1px solid var(--correct);">
+                PASSING STANDARD MET (≥ 450)
+              </span>
+              <h2 class="text-xl sm:text-2xl font-extrabold" style="color: var(--text-primary);">
+                Practice Session Results
+              </h2>
+              <p class="text-xs sm:text-sm font-mono" style="color: var(--text-secondary);">
+                Raw Score: <strong id="raw-score-text" style="color: var(--text-primary);">0 / 25 (0%)</strong> • Elapsed: <strong id="result-time-taken" style="color: var(--text-primary);">00:00</strong>
+              </p>
+            </div>
+
+            <!-- Estimated Scaled Score -->
+            <div class="px-5 py-3.5 rounded-2xl text-right border" style="background-color: var(--bg-recessed); border-color: var(--border-subtle);">
+              <div class="text-[11px] font-mono uppercase tracking-wider" style="color: var(--text-secondary);">Scaled Score</div>
+              <div id="scaled-score-value" class="text-3xl sm:text-4xl font-extrabold font-mono" style="color: var(--text-primary);">600</div>
+              <div class="text-[11px] font-mono" style="color: var(--text-secondary);">Pass: 450 / 800</div>
+            </div>
           </div>
 
-          <div id="question-nav-grid" class="grid grid-cols-5 sm:grid-cols-8 lg:grid-cols-5 gap-2 max-h-80 overflow-y-auto pr-1"></div>
-        </aside>
-      </div>
-    </section>
-
-    <!-- VIEW 3: ANALYTICS & SCALED SCORE REPORT -->
-    <section id="results-view" class="hidden animate-fade-up space-y-6">
-      <!-- Top Score Summary Card -->
-      <div class="glass-card rounded-2xl p-6 sm:p-8 grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
-        <div class="lg:col-span-7 space-y-3">
-          <div class="flex items-center gap-2.5 flex-wrap">
-            <span id="result-pass-badge" class="px-3 py-1 rounded-full text-xs font-mono font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-400/40">
-              PASSING STANDARD MET (≥ 450)
-            </span>
-            <span id="result-time-taken" class="text-xs font-mono text-slate-400"></span>
+          <!-- 5-Domain Breakdown Bars -->
+          <div class="space-y-3.5">
+            <h3 class="text-xs font-mono uppercase tracking-wider font-bold" style="color: var(--text-secondary);">
+              Domain Breakdown
+            </h3>
+            <div id="domain-results-list" class="space-y-3"></div>
           </div>
-          <h2 class="text-2xl sm:text-3xl font-extrabold text-white">Exam Readiness &amp; Domain Diagnostic</h2>
-          <p class="text-sm text-slate-300 leading-relaxed">
-            ISACA scores the CISA exam on a <strong class="text-white">200–800 scaled score</strong> with <strong class="text-cyan-300">450</strong> required to pass. Review your domain-weighted mastery below and export a custom study guide of missed and flagged items.
-          </p>
 
           <!-- Action Buttons -->
-          <div class="flex flex-wrap gap-3 pt-2">
+          <div class="flex flex-wrap gap-2.5 pt-2 border-t" style="border-color: var(--border-subtle);">
             <button id="retake-missed-btn" type="button"
-              class="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-rose-500/20 hover:bg-rose-500/30 text-rose-200 border border-rose-400/40 transition cursor-pointer">
-              Retake Missed Questions (<span id="missed-btn-count">0</span>)
+              class="btn-primary px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold cursor-pointer">
+              Retake Missed (<span id="missed-btn-count">0</span>)
+            </button>
+            <button id="toggle-review-btn" type="button"
+              class="surface-recessed px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold cursor-pointer">
+              Review Questions
             </button>
             <button id="download-guide-btn" type="button"
-              class="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-cyan-500 hover:bg-cyan-400 text-slate-950 transition cursor-pointer">
-              Download Missed &amp; Flagged Study Guide (.txt)
+              class="surface-recessed px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold cursor-pointer">
+              Export Study Notes (.txt)
             </button>
             <button id="new-session-btn" type="button"
-              class="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 transition cursor-pointer">
-              Configure New Session
+              class="surface-recessed px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold cursor-pointer">
+              Back to Setup
             </button>
           </div>
         </div>
 
-        <!-- Scaled Score Gauge Box -->
-        <div class="lg:col-span-5 glass-elevated rounded-2xl p-6 text-center space-y-2 border border-cyan-400/25">
-          <div class="text-xs font-mono uppercase tracking-wider text-slate-400">Estimated ISACA Scaled Score</div>
-          <div id="scaled-score-value" class="text-5xl sm:text-6xl font-extrabold font-mono text-cyan-300">620</div>
-          <div class="text-xs font-mono text-slate-400">
-            Raw Accuracy: <strong id="raw-score-text" class="text-white">18 / 25 (72%)</strong>
+        <!-- Question-by-Question Review Section -->
+        <div id="detailed-review-card" class="surface-card rounded-2xl p-6 sm:p-8 space-y-5">
+          <div class="flex flex-wrap items-center justify-between gap-3 border-b pb-4" style="border-color: var(--border-subtle);">
+            <h3 class="text-base font-bold" style="color: var(--text-primary);">Question Review</h3>
+            <div class="flex items-center gap-1.5">
+              <button data-review-filter="all" type="button" class="review-filter-btn px-3 py-1 rounded-lg text-xs font-semibold cursor-pointer">All</button>
+              <button data-review-filter="missed" type="button" class="review-filter-btn px-3 py-1 rounded-lg text-xs font-semibold cursor-pointer">Missed</button>
+              <button data-review-filter="flagged" type="button" class="review-filter-btn px-3 py-1 rounded-lg text-xs font-semibold cursor-pointer">Flagged</button>
+            </div>
           </div>
-          <div class="w-full h-3 rounded-full bg-slate-900 overflow-hidden relative mt-3 border border-slate-700">
-            <!-- 450 passing marker at (450-200)/600 = 41.67% -->
-            <div class="absolute top-0 bottom-0 w-0.5 bg-amber-400 z-10" style="left: 41.67%" title="450 Passing Mark"></div>
-            <div id="scaled-score-bar" class="h-full bg-gradient-to-r from-rose-400 via-amber-400 to-emerald-400 transition-all duration-500" style="width: 70%"></div>
-          </div>
-          <div class="flex justify-between text-[10px] font-mono text-slate-500 pt-0.5">
-            <span>200</span>
-            <span class="text-amber-300">450 Pass</span>
-            <span>800</span>
-          </div>
+          <div id="detailed-review-list" class="space-y-4"></div>
         </div>
-      </div>
-
-      <!-- Domain Mastery Bars -->
-      <div class="glass-card rounded-2xl p-6 space-y-4">
-        <h3 class="text-base font-bold text-white">Domain-by-Domain Performance Breakdown</h3>
-        <div id="domain-results-list" class="space-y-4"></div>
-      </div>
-
-      <!-- Detailed Item Review -->
-      <div class="glass-card rounded-2xl p-6 space-y-5">
-        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-4">
-          <h3 class="text-base font-bold text-white">Question-by-Question Review</h3>
-          <div class="flex items-center gap-2">
-            <button data-review-filter="all" type="button" class="review-filter-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-cyan-500/20 text-cyan-300 border border-cyan-400/40 cursor-pointer">All</button>
-            <button data-review-filter="missed" type="button" class="review-filter-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300 border border-slate-700 cursor-pointer">Missed Only</button>
-            <button data-review-filter="flagged" type="button" class="review-filter-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300 border border-slate-700 cursor-pointer">Flagged Only</button>
-          </div>
-        </div>
-        <div id="detailed-review-list" class="space-y-4"></div>
-      </div>
-    </section>
-  </main>
+      </section>
+    </main>
+  </div>
 
   <!-- MULTI-PDF & TEXT QUESTION BANK IMPORTER MODAL -->
-  <div id="importer-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-3 sm:p-6 bg-slate-950/80 backdrop-blur-md">
-    <div class="glass-elevated rounded-2xl max-w-4xl w-full max-h-[92vh] flex flex-col overflow-hidden shadow-2xl border border-slate-700/80">
+  <div id="importer-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+    <div class="surface-card rounded-2xl max-w-2xl w-full max-h-[90vh] flex flex-col overflow-hidden">
       <!-- Modal Header -->
-      <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between gap-4">
+      <div class="px-6 py-4 border-b flex items-center justify-between gap-4" style="border-color: var(--border-subtle);">
         <div>
-          <h2 class="text-lg font-extrabold text-white">Multi-PDF &amp; Text Question Bank Importer</h2>
-          <p class="text-xs text-slate-400">Client-side PDF.js parser • Dual-format CISA extraction • Auto-deduplicated in localStorage</p>
+          <h2 class="text-base sm:text-lg font-extrabold" style="color: var(--text-primary);">Import CISA Question Bank</h2>
+          <p class="text-xs" style="color: var(--text-secondary);">Client-side PDF.js parser • Auto-classifies Domains 1–5 • Saved locally</p>
         </div>
-        <button id="close-importer-btn" type="button" class="p-2 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 cursor-pointer">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-          </svg>
+        <button id="close-importer-btn" type="button" class="surface-recessed px-2.5 py-1.5 rounded-lg text-xs font-bold cursor-pointer">
+          ✕
         </button>
       </div>
 
       <!-- Modal Tabs -->
-      <div class="px-6 pt-3 border-b border-slate-800 flex items-center gap-2 bg-slate-900/40">
-        <button id="tab-pdf-upload" type="button" class="px-4 py-2.5 text-xs sm:text-sm font-bold border-b-2 border-cyan-400 text-cyan-300 cursor-pointer">
-          1. Batch Upload PDFs / Files
+      <div class="px-6 pt-2 border-b flex items-center gap-4" style="border-color: var(--border-subtle); background-color: var(--bg-recessed);">
+        <button id="tab-pdf-upload" type="button" class="py-2.5 text-xs sm:text-sm font-bold border-b-2 cursor-pointer" style="border-color: var(--accent); color: var(--accent);">
+          Batch Upload PDFs / Files
         </button>
-        <button id="tab-raw-paste" type="button" class="px-4 py-2.5 text-xs sm:text-sm font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-200 cursor-pointer">
-          2. Paste Raw Text / JSON
+        <button id="tab-raw-paste" type="button" class="py-2.5 text-xs sm:text-sm font-semibold border-b-2 border-transparent cursor-pointer" style="color: var(--text-secondary);">
+          Paste Text / JSON
         </button>
       </div>
 
@@ -572,75 +548,71 @@
         <!-- Tab 1: PDF / File Drag & Drop -->
         <div id="panel-pdf-upload" class="space-y-4">
           <div id="drop-zone"
-            class="border-2 border-dashed border-slate-700 hover:border-cyan-400/70 rounded-2xl p-8 text-center bg-slate-900/50 transition cursor-pointer space-y-3">
-            <div class="w-12 h-12 rounded-2xl bg-cyan-500/15 border border-cyan-400/30 flex items-center justify-center mx-auto text-cyan-300">
-              <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-              </svg>
-            </div>
-            <div>
-              <p class="text-sm sm:text-base font-bold text-white">Drag &amp; drop multiple CISA PDF files here, or click to browse</p>
-              <p class="text-xs text-slate-400 mt-1">Supports batch selection (e.g., <span class="font-mono text-slate-300">0 to 100 CISA dumps.pdf</span>, <span class="font-mono text-slate-300">100 to 200 CISA dumps.pdf</span>, <span class="font-mono text-slate-300">.txt</span>, <span class="font-mono text-slate-300">.json</span>)</p>
-            </div>
+            class="border-2 border-dashed rounded-2xl p-7 text-center transition cursor-pointer space-y-2" style="background-color: var(--bg-recessed); border-color: var(--border-strong);">
+            <p class="text-sm sm:text-base font-bold" style="color: var(--text-primary);">
+              Drag &amp; drop multiple CISA PDFs here, or click to browse
+            </p>
+            <p class="text-xs" style="color: var(--text-secondary);">
+              Supports batch selection (.pdf, .txt, .json) — extracts and deduplicates all questions locally
+            </p>
             <input id="file-input" type="file" multiple accept=".pdf,.txt,.json" class="hidden" />
           </div>
 
           <!-- Extraction Progress Bar -->
-          <div id="import-progress-box" class="hidden rounded-xl p-4 bg-slate-900/90 border border-slate-800 space-y-2.5">
+          <div id="import-progress-box" class="hidden rounded-xl p-4 space-y-2 border" style="background-color: var(--bg-recessed); border-color: var(--border-subtle);">
             <div class="flex items-center justify-between text-xs font-mono">
-              <span id="import-status-label" class="text-cyan-300">Reading PDFs...</span>
-              <span id="import-count-label" class="text-emerald-300 font-bold">0 parsed</span>
+              <span id="import-status-label" style="color: var(--text-primary);">Reading PDFs...</span>
+              <span id="import-count-label" class="font-bold" style="color: var(--accent);">0 added</span>
             </div>
-            <div class="w-full h-2.5 rounded-full bg-slate-950 overflow-hidden border border-slate-800">
-              <div id="import-progress-bar" class="h-full bg-gradient-to-r from-cyan-400 via-indigo-400 to-emerald-400 transition-all duration-200" style="width: 0%"></div>
+            <div class="w-full h-2 rounded-full overflow-hidden" style="background-color: var(--bg-card);">
+              <div id="import-progress-bar" class="h-full transition-all duration-200" style="width: 0%; background-color: var(--accent);"></div>
             </div>
-            <div id="import-file-log" class="text-[11px] font-mono text-slate-400 max-h-28 overflow-y-auto space-y-1 pt-1"></div>
+            <div id="import-file-log" class="text-[11px] font-mono max-h-28 overflow-y-auto space-y-1 pt-1" style="color: var(--text-secondary);"></div>
           </div>
         </div>
 
         <!-- Tab 2: Paste Raw Text or JSON -->
         <div id="panel-raw-paste" class="hidden space-y-3">
-          <p class="text-xs text-slate-400">
-            Paste raw text copied from any CISA PDF/document (both <span class="font-mono text-slate-200">Correct Answer: A</span> and inline <span class="font-mono text-slate-200">(Correct Answer)</span> formats supported) or paste a JSON question array.
+          <p class="text-xs" style="color: var(--text-secondary);">
+            Paste text copied from any CISA PDF/document (supports both <code class="font-mono">Correct Answer: A</code> and inline <code class="font-mono">(Correct Answer)</code> formats) or a JSON array.
           </p>
-          <textarea id="raw-paste-input" rows="8"
+          <textarea id="raw-paste-input" rows="7"
             placeholder="QUESTION 1&#10;Which of the following is the PRIMARY purpose of an IS audit charter?&#10;A) Define detailed audit procedures&#10;B) Establish the authority and responsibility of the audit function&#10;C) Document daily operational logs&#10;D) Approve IT budgets&#10;Correct Answer: B&#10;Explanation: The audit charter formally defines the purpose, authority, and responsibility of the IS audit function."
-            class="w-full rounded-xl p-3.5 bg-slate-950/90 border border-slate-700 text-xs font-mono text-slate-200 focus:outline-none focus:border-cyan-400"></textarea>
+            class="w-full rounded-xl p-3.5 text-xs font-mono focus:outline-none" style="background-color: var(--bg-recessed); border: 1px solid var(--border-subtle); color: var(--text-primary);"></textarea>
           <div class="flex justify-end">
             <button id="parse-paste-btn" type="button"
-              class="px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-cyan-500 hover:bg-cyan-400 text-slate-950 transition cursor-pointer">
-              Parse &amp; Add to Question Bank
+              class="btn-primary px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold cursor-pointer">
+              Parse &amp; Add to Bank
             </button>
           </div>
         </div>
 
-        <!-- Current Bank Summary & Management Controls -->
-        <div class="rounded-xl p-4 bg-slate-900/75 border border-slate-800 space-y-3">
+        <!-- Bank Inventory & Reset Controls -->
+        <div class="rounded-xl p-4 space-y-3 border" style="background-color: var(--bg-recessed); border-color: var(--border-subtle);">
           <div class="flex flex-wrap items-center justify-between gap-2">
-            <div>
-              <div class="text-xs font-bold uppercase tracking-wider text-slate-300">Persistent Question Bank Inventory</div>
-              <div class="text-xs text-slate-400 mt-0.5">
-                Starter Bank: <strong id="modal-starter-count" class="text-white">30</strong> • Imported Custom: <strong id="modal-imported-count" class="text-cyan-300">0</strong> • Total Active: <strong id="modal-total-count" class="text-emerald-300">30</strong>
-              </div>
+            <div class="text-xs" style="color: var(--text-secondary);">
+              Built-in: <strong id="modal-starter-count" style="color: var(--text-primary);">35</strong> •
+              Imported: <strong id="modal-imported-count" style="color: var(--text-primary);">0</strong> •
+              Total: <strong id="modal-total-count" style="color: var(--accent);">35</strong>
             </div>
             <div class="flex flex-wrap items-center gap-2">
               <button id="export-bank-btn" type="button"
-                class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-cyan-300 border border-slate-700 transition cursor-pointer">
-                Export Full Bank (.json)
+                class="surface-card px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer">
+                Export JSON
               </button>
               <button id="clear-imported-btn" type="button"
-                class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 border border-rose-400/30 transition cursor-pointer">
-                Clear Imported Questions
+                class="surface-card px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer" style="color: var(--incorrect);">
+                Reset to Built-In Bank
               </button>
             </div>
           </div>
 
-          <!-- Two-step inline clear confirmation banner (never uses window.confirm) -->
-          <div id="clear-confirm-banner" class="hidden rounded-lg p-3 bg-rose-950/60 border border-rose-500/40 flex flex-wrap items-center justify-between gap-2">
-            <span class="text-xs text-rose-200">Remove all imported questions from localStorage? (The 30 built-in starter questions remain intact.)</span>
+          <!-- Two-step inline reset confirmation (never uses window.confirm) -->
+          <div id="clear-confirm-banner" class="hidden rounded-lg p-3 border flex flex-wrap items-center justify-between gap-2" style="background-color: var(--bg-card); border-color: var(--incorrect);">
+            <span class="text-xs" style="color: var(--text-primary);">Remove all imported questions and reset to the 35 built-in questions?</span>
             <div class="flex items-center gap-2">
-              <button id="confirm-clear-yes" type="button" class="px-3 py-1 rounded bg-rose-500 hover:bg-rose-400 text-slate-950 text-xs font-bold cursor-pointer">Yes, Clear Imported</button>
-              <button id="confirm-clear-no" type="button" class="px-3 py-1 rounded bg-slate-800 text-slate-300 text-xs font-semibold cursor-pointer">Cancel</button>
+              <button id="confirm-clear-yes" type="button" class="btn-primary px-3 py-1 rounded text-xs font-bold cursor-pointer">Confirm Reset</button>
+              <button id="confirm-clear-no" type="button" class="surface-recessed px-3 py-1 rounded text-xs font-semibold cursor-pointer">Cancel</button>
             </div>
           </div>
         </div>
@@ -657,16 +629,17 @@
 
     // Official ISACA CISA 5-Domain Metadata & Blueprint Weights
     const DOMAINS = {
-      1: { id: 1, short: 'D1', name: 'IS Auditing Process', weight: 0.18, pct: '18%', accent: 'cyan' },
-      2: { id: 2, short: 'D2', name: 'Governance & Management of IT', weight: 0.18, pct: '18%', accent: 'indigo' },
-      3: { id: 3, short: 'D3', name: 'IS Acquisition, Dev & Implementation', weight: 0.12, pct: '12%', accent: 'amber' },
-      4: { id: 4, short: 'D4', name: 'IS Operations & Business Resilience', weight: 0.26, pct: '26%', accent: 'emerald' },
-      5: { id: 5, short: 'D5', name: 'Protection of Information Assets', weight: 0.26, pct: '26%', accent: 'rose' }
+      1: { id: 1, short: 'D1', name: 'IS Auditing Process', weight: 0.18, pct: '18%' },
+      2: { id: 2, short: 'D2', name: 'Governance & Management of IT', weight: 0.18, pct: '18%' },
+      3: { id: 3, short: 'D3', name: 'IS Acquisition, Dev & Implementation', weight: 0.12, pct: '12%' },
+      4: { id: 4, short: 'D4', name: 'IS Operations & Business Resilience', weight: 0.26, pct: '26%' },
+      5: { id: 5, short: 'D5', name: 'Protection of Information Assets', weight: 0.26, pct: '26%' }
     };
 
     const STORAGE_KEY = 'cisa_custom_bank_v1';
+    const THEME_KEY = 'cisa_theme';
 
-    // 30 High-Yield Built-In ISACA CISA Questions (6 per Domain across Domains 1-5)
+    // 35 Authentic ISACA CISA Questions Distributed Proportionally Across Domains 1-5 (6 / 6 / 4 / 10 / 9)
     const STARTER_QUESTIONS = [
       // --- DOMAIN 1: IS AUDITING PROCESS (6) ---
       {
@@ -840,7 +813,7 @@
         explanation: 'An IT Steering Committee bridges executive business leadership and IT, ensuring major IT initiatives, budgets, and priorities align with strategic enterprise objectives.'
       },
 
-      // --- DOMAIN 3: IS ACQUISITION, DEVELOPMENT & IMPLEMENTATION (6) ---
+      // --- DOMAIN 3: IS ACQUISITION, DEVELOPMENT & IMPLEMENTATION (4) ---
       {
         id: 'starter-d3-1',
         domain: 3,
@@ -887,20 +860,6 @@
         id: 'starter-d3-4',
         domain: 3,
         source: 'starter',
-        question: 'During data migration from a legacy mainframe database to a new cloud ERP system, what is the MOST reliable control to ensure no records were lost or altered in transit?',
-        options: [
-          'Visually inspecting a sample of 20 migrated customer records',
-          'Reconciling record counts, control totals, and financial balances between source and target systems',
-          'Relying on the ETL vendor’s completion status email',
-          'Running network bandwidth utilization tests during migration'
-        ],
-        answer: 1,
-        explanation: 'Automated reconciliation of 100% of record counts, hash totals, and financial balances between source and target databases proves completeness and accuracy across the entire migration.'
-      },
-      {
-        id: 'starter-d3-5',
-        domain: 3,
-        source: 'starter',
         question: 'During an audit of change management, an IS auditor finds that an emergency patch was applied to production at 2:00 AM on a Sunday without prior Change Advisory Board (CAB) approval. What should the auditor verify FIRST?',
         options: [
           'Whether the developer had direct write access to production source repositories',
@@ -911,22 +870,8 @@
         answer: 1,
         explanation: 'Emergency changes often require rapid deployment outside normal CAB schedules, so proper change management requires logging the emergency ticket, obtaining emergency authorization, and performing formal post-implementation CAB review.'
       },
-      {
-        id: 'starter-d3-6',
-        domain: 3,
-        source: 'starter',
-        question: 'Which testing type specifically verifies that recent code enhancements have not unintentionally broken existing functionality in other modules of an application?',
-        options: [
-          'Unit testing',
-          'Regression testing',
-          'Sociability testing',
-          'Penetration testing'
-        ],
-        answer: 1,
-        explanation: 'Regression testing re-executes previously passed test suites after code modifications to confirm that unchanged modules continue to operate properly.'
-      },
 
-      // --- DOMAIN 4: IS OPERATIONS & BUSINESS RESILIENCE (6) ---
+      // --- DOMAIN 4: IS OPERATIONS & BUSINESS RESILIENCE (10) ---
       {
         id: 'starter-d4-1',
         domain: 4,
@@ -1011,8 +956,64 @@
         answer: 1,
         explanation: 'Recovery sites must be geographically separated outside the same disaster footprint (power grid, flood zone, fault line) so a single regional event cannot knock out both primary and backup facilities.'
       },
+      {
+        id: 'starter-d4-7',
+        domain: 4,
+        source: 'starter',
+        question: 'Why should an IS auditor recommend immutable (WORM) offline or air-gapped backup copies as part of an enterprise ransomware resilience strategy?',
+        options: [
+          'To compress backup storage volumes by over 90 percent',
+          'To prevent attackers with compromised administrative credentials from encrypting or deleting recovery backups',
+          'To eliminate the need for periodic backup restoration testing',
+          'To guarantee a zero-second Recovery Time Objective (RTO)'
+        ],
+        answer: 1,
+        explanation: 'Modern ransomware specifically targets online backup repositories using stolen domain admin credentials. Write-Once-Read-Many (WORM) immutability and network isolation ensure clean recovery points survive.'
+      },
+      {
+        id: 'starter-d4-8',
+        domain: 4,
+        source: 'starter',
+        question: 'In IT service management, what is the PRIMARY distinction between Incident Management and Problem Management?',
+        options: [
+          'Incident Management handles hardware failures, while Problem Management handles software bugs',
+          'Incident Management restores normal service quickly, while Problem Management identifies and eliminates root causes',
+          'Incident Management is executed by external auditors, while Problem Management is executed by end users',
+          'Incident Management occurs only after a major disaster, while Problem Management runs daily'
+        ],
+        answer: 1,
+        explanation: 'Incident Management prioritizes rapid service restoration (often via workarounds) to minimize business disruption, whereas Problem Management investigates underlying root causes to prevent recurring incidents.'
+      },
+      {
+        id: 'starter-d4-9',
+        domain: 4,
+        source: 'starter',
+        question: 'Which fire suppression system is MOST appropriate for an occupied server room containing high-value electronic equipment?',
+        options: [
+          'Wet-pipe water sprinkler system',
+          'Clean-agent gas suppression (such as FM-200 or Novec 1230)',
+          'Halon 1301 flooding system',
+          'Deluge water sprinkler system'
+        ],
+        answer: 1,
+        explanation: 'Clean-agent gas suppression extinguishes fires rapidly without leaving conductive or corrosive residue on servers and is safe for occupied spaces, unlike banned ozone-depleting Halon or water deluge systems.'
+      },
+      {
+        id: 'starter-d4-10',
+        domain: 4,
+        source: 'starter',
+        question: 'Which RAID configuration provides fault tolerance capable of surviving the simultaneous failure of ANY TWO hard drives in the array?',
+        options: [
+          'RAID 0',
+          'RAID 1',
+          'RAID 5',
+          'RAID 6'
+        ],
+        answer: 3,
+        explanation: 'RAID 6 uses dual distributed parity blocks across disks, enabling the array to continue operating even if any two drives fail simultaneously.'
+      },
 
-      // --- DOMAIN 5: PROTECTION OF INFORMATION ASSETS (6) ---
+      // --- DOMAIN 5: PROTECTION OF INFORMATION ASSETS (9) ---
       {
         id: 'starter-d5-1',
         domain: 5,
@@ -1096,6 +1097,48 @@
         ],
         answer: 1,
         explanation: 'FIDO2/WebAuthn binds cryptographic challenge-response signatures directly to the legitimate TLS origin domain, neutralizing AiTM phishing proxies that relay OTP codes.'
+      },
+      {
+        id: 'starter-d5-7',
+        domain: 5,
+        source: 'starter',
+        question: 'What is the MOST effective code-level defense against SQL injection vulnerabilities in web applications?',
+        options: [
+          'Client-side JavaScript input length validation',
+          'Parameterized queries (prepared statements)',
+          'Obfuscating database table names in application configuration files',
+          'Deploying a network-layer packet filtering firewall'
+        ],
+        answer: 1,
+        explanation: 'Parameterized queries strictly separate SQL command structure from user-supplied parameters, ensuring user input is treated strictly as data rather than executable SQL syntax.'
+      },
+      {
+        id: 'starter-d5-8',
+        domain: 5,
+        source: 'starter',
+        question: 'Which defense-in-depth control prevents an unauthorized visitor from plugging a rogue laptop into an active Ethernet wall jack in an empty conference room and gaining internal LAN access?',
+        options: [
+          'Disabling DHCP across the entire enterprise network',
+          'IEEE 802.1X port-based Network Access Control (NAC) with certificate authentication',
+          'Enabling split tunneling on corporate VPN gateways',
+          'Installing host-based antivirus software on conference room projectors'
+        ],
+        answer: 1,
+        explanation: 'IEEE 802.1X port-based NAC authenticates connected devices via digital certificates or credentials before granting switch port access to the internal VLAN.'
+      },
+      {
+        id: 'starter-d5-9',
+        domain: 5,
+        source: 'starter',
+        question: 'In federated single sign-on (SSO), what is the PRIMARY difference between OAuth 2.0 and OpenID Connect (OIDC)?',
+        options: [
+          'OAuth 2.0 encrypts data at rest, whereas OIDC encrypts data in transit',
+          'OAuth 2.0 is an authorization framework for delegated API access, whereas OIDC adds an identity layer for user authentication',
+          'OAuth 2.0 is used only for on-premises Active Directory, whereas OIDC is used only for mobile apps',
+          'OAuth 2.0 replaces TLS certificates, whereas OIDC replaces firewalls'
+        ],
+        answer: 1,
+        explanation: 'OAuth 2.0 delegates authorization scopes via access tokens without defining user identity, whereas OpenID Connect (OIDC) builds on OAuth 2.0 by adding an ID Token (JWT) to authenticate the user.'
       }
     ];
 
@@ -1111,22 +1154,42 @@
       highlight: true,
       timed: false,
       secondsRemaining: 0,
-      totalSeconds: 0,
+      startTime: null,
+      elapsedSeconds: 0,
       timerInterval: null,
       reviewFilter: 'all'
     };
 
+    // Theme Switcher (Dark / Light / Grayscale)
+    function applyTheme(themeName) {
+      const valid = ['dark', 'light', 'grayscale'].includes(themeName) ? themeName : 'dark';
+      document.documentElement.setAttribute('data-theme', valid);
+      try {
+        localStorage.setItem(THEME_KEY, valid);
+      } catch (e) {}
+
+      document.querySelectorAll('[data-theme-choice]').forEach(btn => {
+        const isSelected = btn.getAttribute('data-theme-choice') === valid;
+        btn.classList.toggle('active', isSelected);
+      });
+    }
+
+    function initTheme() {
+      let saved = 'dark';
+      try {
+        saved = localStorage.getItem(THEME_KEY) || 'dark';
+      } catch (e) {}
+      applyTheme(saved);
+    }
+
     // Utility: Toast Notification (never uses alert)
-    function showToast(message, type = 'info') {
+    function showToast(message) {
       const container = document.getElementById('toast-container');
-      const colors = {
-        info: 'border-cyan-400/40 bg-slate-900/95 text-cyan-200',
-        success: 'border-emerald-400/40 bg-slate-900/95 text-emerald-200',
-        warning: 'border-amber-400/40 bg-slate-900/95 text-amber-200',
-        error: 'border-rose-400/40 bg-slate-900/95 text-rose-200'
-      };
       const el = document.createElement('div');
-      el.className = `pointer-events-auto px-4 py-3 rounded-xl border shadow-xl text-xs sm:text-sm font-medium backdrop-blur-md transition-all duration-300 ${colors[type] || colors.info}`;
+      el.className = 'pointer-events-auto px-4 py-3 rounded-xl border shadow-xl text-xs sm:text-sm font-medium transition-all duration-300';
+      el.style.backgroundColor = 'var(--bg-card)';
+      el.style.borderColor = 'var(--border-strong)';
+      el.style.color = 'var(--text-primary)';
       el.textContent = message;
       container.appendChild(el);
       setTimeout(() => {
@@ -1160,7 +1223,7 @@
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(customQuestions));
       } catch (err) {
-        showToast('Storage quota warning: could not persist all questions to localStorage.', 'warning');
+        showToast('Storage quota warning: could not persist all questions to localStorage.');
       }
     }
 
@@ -1169,12 +1232,133 @@
     }
 
     // Stem Normalization for Deduplication
-    function normalizeStem(text) {
-      return (text || '')
-        .toLowerCase()
-        .replace(/^question\s*:?\s*/i, '')
-        .replace(/[^a-z0-9]+/g, '')
-        .slice(0, 130);
+    // Merge newly parsed questions into customQuestions with deduplication and domain summary
+    function mergeNewQuestions(candidates) {
+      const existingStems = new Set(getAllQuestions().map(q => normalizeStem(q.question)));
+      let added = 0;
+      let duplicates = 0;
+      const domainAdds = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+
+      for (const q of candidates) {
+        const norm = normalizeStem(q.question);
+        if (!norm || existingStems.has(norm)) {
+          duplicates++;
+          continue;
+        }
+        existingStems.add(norm);
+        customQuestions.push(q);
+        added++;
+        if (domainAdds[q.domain] !== undefined) domainAdds[q.domain]++;
+      }
+
+      if (added > 0) {
+        saveCustomBank();
+      }
+      refreshBankUI();
+      return { added, duplicates, domainAdds };
+    }
+
+    // Handle Multi-File Upload (PDF, TXT, JSON)
+    async function handleFilesUpload(fileList) {
+      const files = Array.from(fileList || []);
+      if (!files.length) return;
+
+      const progressBox = document.getElementById('import-progress-box');
+      const statusLabel = document.getElementById('import-status-label');
+      const countLabel = document.getElementById('import-count-label');
+      const progressBar = document.getElementById('import-progress-bar');
+      const fileLog = document.getElementById('import-file-log');
+
+      progressBox.classList.remove('hidden');
+      fileLog.innerHTML = '';
+      progressBar.style.width = '5%';
+
+      let totalAdded = 0;
+      let totalDupes = 0;
+      const totalDomainAdds = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        statusLabel.textContent = `Processing (${i + 1}/${files.length}): ${file.name}`;
+        progressBar.style.width = `${Math.round(((i + 0.3) / files.length) * 100)}%`;
+
+        try {
+          let parsedFromFile = [];
+          const lowerName = file.name.toLowerCase();
+
+          if (lowerName.endsWith('.pdf')) {
+            const buffer = await file.arrayBuffer();
+            const extractedText = await extractTextFromPdfBuffer(buffer);
+            parsedFromFile = parseCisaRawText(extractedText, file.name);
+          } else if (lowerName.endsWith('.json')) {
+            const text = await file.text();
+            const json = JSON.parse(text);
+            const arr = Array.isArray(json) ? json : (json.questions || json.answeredQuestions || []);
+            parsedFromFile = arr
+              .filter(item => item && item.question && Array.isArray(item.options) && typeof item.answer === 'number')
+              .map(item => ({
+                id: `imp-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+                domain: [1, 2, 3, 4, 5].includes(item.domain) ? item.domain : classifyDomain(item.question, '', item.explanation || ''),
+                source: 'imported',
+                originFile: file.name,
+                question: item.question.trim(),
+                options: item.options.map(o => String(o).trim()),
+                answer: item.answer,
+                explanation: item.explanation || 'Imported JSON question.'
+              }));
+          } else {
+            const text = await file.text();
+            parsedFromFile = parseCisaRawText(text, file.name);
+          }
+
+          const { added, duplicates, domainAdds } = mergeNewQuestions(parsedFromFile);
+          totalAdded += added;
+          totalDupes += duplicates;
+          for (const d of [1, 2, 3, 4, 5]) totalDomainAdds[d] += domainAdds[d];
+
+          const row = document.createElement('div');
+          row.className = 'flex items-center justify-between';
+          row.innerHTML = `<span>✓ ${escapeHtml(file.name)}</span><span style="color: var(--accent);">+${added} added (${duplicates} dupes)</span>`;
+          fileLog.appendChild(row);
+        } catch (err) {
+          const row = document.createElement('div');
+          row.style.color = 'var(--incorrect)';
+          row.textContent = `✕ ${file.name}: ${err.message || 'Parse error'}`;
+          fileLog.appendChild(row);
+        }
+
+        countLabel.textContent = `+${totalAdded} added`;
+        progressBar.style.width = `${Math.round(((i + 1) / files.length) * 100)}%`;
+      }
+
+      statusLabel.textContent = `Completed ${files.length} file(s)`;
+      const domBreakdown = [1, 2, 3, 4, 5].map(d => `D${d}:${totalDomainAdds[d]}`).join(' ');
+      showToast(`Added ${totalAdded} new questions (${domBreakdown}) • ${totalDupes} dupes skipped.`);
+    }
+
+    // Refresh Header Pill & Modal Inventory Counts
+    function refreshBankUI() {
+      const all = getAllQuestions();
+      document.getElementById('bank-count-pill').textContent = `${all.length} question${all.length === 1 ? '' : 's'}`;
+      document.getElementById('modal-starter-count').textContent = STARTER_QUESTIONS.length;
+      document.getElementById('modal-imported-count').textContent = customQuestions.length;
+      document.getElementById('modal-total-count').textContent = all.length;
+      updateMatchingPoolCount();
+    }
+
+    function getFilteredPool() {
+      const domainVal = document.getElementById('cfg-domain').value;
+      let pool = getAllQuestions();
+      if (domainVal !== 'all') {
+        const targetDom = Number(domainVal);
+        pool = pool.filter(q => q.domain === targetDom);
+      }
+      return pool;
+    }
+
+    function updateMatchingPoolCount() {
+      const pool = getFilteredPool();
+      document.getElementById('matching-pool-badge').textContent = `${pool.length} available`;
     }
 
     // Automatic ISACA Domain Classifier (Domains 1-5)
@@ -1737,19 +1921,18 @@
     function startQuizSession(customList = null) {
       const pool = customList || getFilteredPool();
       if (!pool.length) {
-        showToast('No questions match your current filter. Import PDFs or adjust filters.', 'warning');
+        showToast('No questions match your current domain filter. Import PDFs or choose All Domains.');
         return;
       }
 
       const isAllDomains = document.getElementById('cfg-domain').value === 'all';
       const lengthVal = customList ? 'all' : document.getElementById('cfg-length').value;
       const mode = document.getElementById('cfg-mode').value;
-      const shuffleOpts = document.getElementById('cfg-shuffle-opts').checked;
       const highlight = document.getElementById('cfg-highlight').checked;
       const timed = document.getElementById('cfg-timer').checked;
 
       const sampled = buildSessionQuestions(pool, lengthVal, isAllDomains && !customList);
-      const prepared = sampled.map(q => prepareQuestionInstance(q, shuffleOpts));
+      const prepared = sampled.map(q => prepareQuestionInstance(q, true));
 
       if (sessionState.timerInterval) {
         clearInterval(sessionState.timerInterval);
@@ -1765,7 +1948,8 @@
         highlight,
         timed,
         secondsRemaining: prepared.length * 96,
-        totalSeconds: prepared.length * 96,
+        startTime: Date.now(),
+        elapsedSeconds: 0,
         timerInterval: null,
         reviewFilter: 'all'
       };
@@ -1774,44 +1958,43 @@
       document.getElementById('setup-view').classList.add('hidden');
       document.getElementById('results-view').classList.add('hidden');
       document.getElementById('quiz-view').classList.remove('hidden');
+      document.getElementById('navigator-popover').classList.add('hidden');
 
-      document.getElementById('quiz-mode-badge').textContent =
-        mode === 'study' ? 'STUDY MODE • INSTANT FEEDBACK' : 'EXAM SIMULATION • BLIND';
       document.getElementById('q-total-num').textContent = prepared.length;
-      document.getElementById('toggle-highlight-live').textContent = `Qualifiers: ${highlight ? 'ON' : 'OFF'}`;
 
       const timerBox = document.getElementById('timer-box');
       if (timed) {
         timerBox.classList.remove('hidden');
-        timerBox.classList.add('flex');
         updateTimerDisplay();
         sessionState.timerInterval = setInterval(() => {
           sessionState.secondsRemaining--;
           updateTimerDisplay();
           if (sessionState.secondsRemaining <= 0) {
             clearInterval(sessionState.timerInterval);
-            showToast('Time expired! Submitting exam automatically.', 'warning');
+            showToast('Time expired! Submitting exam automatically.');
             finishExam();
           }
         }, 1000);
       } else {
         timerBox.classList.add('hidden');
-        timerBox.classList.remove('flex');
       }
 
       renderCurrentQuestion();
       renderNavigatorGrid();
     }
 
-    function updateTimerDisplay() {
-      const secs = Math.max(0, sessionState.secondsRemaining);
+    function formatDuration(totalSecs) {
+      const secs = Math.max(0, Math.round(totalSecs));
       const hrs = Math.floor(secs / 3600);
       const mins = Math.floor((secs % 3600) / 60);
       const remSecs = secs % 60;
-      const formatted = hrs > 0
+      return hrs > 0
         ? `${hrs}:${String(mins).padStart(2, '0')}:${String(remSecs).padStart(2, '0')}`
         : `${String(mins).padStart(2, '0')}:${String(remSecs).padStart(2, '0')}`;
-      document.getElementById('timer-display').textContent = formatted;
+    }
+
+    function updateTimerDisplay() {
+      document.getElementById('timer-display').textContent = formatDuration(sessionState.secondsRemaining);
     }
 
     // Render Active Question
@@ -1827,20 +2010,19 @@
       document.getElementById('quiz-progress-bar').style.width = `${Math.round(((idx + 1) / total) * 100)}%`;
 
       const dom = DOMAINS[q.domain] || DOMAINS[1];
-      document.getElementById('q-domain-badge').textContent = `Domain ${dom.id} • ${dom.name} (${dom.pct})`;
-      document.getElementById('q-source-badge').textContent = q.source === 'imported'
-        ? `Imported${q.originFile ? ': ' + q.originFile : ''}`
-        : 'Built-In Starter Bank';
+      document.getElementById('q-domain-badge').textContent = `${dom.short} • ${dom.name}`;
 
       // Flag button state
       const flagBtn = document.getElementById('flag-question-btn');
       const flagLabel = document.getElementById('flag-btn-label');
       if (isFlagged) {
-        flagBtn.classList.add('border-amber-400', 'text-amber-300', 'bg-amber-500/15');
-        flagLabel.textContent = 'Flagged';
+        flagBtn.style.borderColor = 'var(--accent)';
+        flagBtn.style.backgroundColor = 'var(--accent-soft)';
+        flagLabel.textContent = '★ Flagged';
       } else {
-        flagBtn.classList.remove('border-amber-400', 'text-amber-300', 'bg-amber-500/15');
-        flagLabel.textContent = 'Flag for Review';
+        flagBtn.style.borderColor = 'var(--border-subtle)';
+        flagBtn.style.backgroundColor = 'var(--bg-recessed)';
+        flagLabel.textContent = 'Flag';
       }
 
       // Stem
@@ -1851,30 +2033,34 @@
       const letters = ['A', 'B', 'C', 'D', 'E'];
       optionsContainer.innerHTML = q.options.map((optText, optIdx) => {
         let extraClass = '';
-        let badgeClass = 'bg-slate-800 text-slate-300 border-slate-700';
+        let badgeStyle = 'background-color: var(--bg-card); color: var(--text-secondary); border-color: var(--border-subtle);';
+        let statusTag = '';
 
         if (hasAnswered) {
           if (sessionState.mode === 'study') {
             if (optIdx === q.answer) {
               extraClass = 'option-correct';
-              badgeClass = 'bg-emerald-500 text-slate-950 border-emerald-400';
+              badgeStyle = 'background-color: var(--correct); color: var(--bg-app); border-color: var(--correct);';
+              statusTag = '<span class="ml-auto font-mono text-xs font-bold shrink-0" style="color: var(--correct);">✓</span>';
             } else if (optIdx === userChoice) {
               extraClass = 'option-wrong';
-              badgeClass = 'bg-rose-500 text-slate-950 border-rose-400';
+              badgeStyle = 'background-color: var(--incorrect); color: var(--bg-app); border-color: var(--incorrect);';
+              statusTag = '<span class="ml-auto font-mono text-xs font-bold shrink-0" style="color: var(--incorrect);">✕</span>';
             }
           } else if (optIdx === userChoice) {
             extraClass = 'option-selected';
-            badgeClass = 'bg-cyan-400 text-slate-950 border-cyan-300';
+            badgeStyle = 'background-color: var(--accent); color: var(--accent-fg); border-color: var(--accent);';
           }
         }
 
         return `
           <button type="button" data-opt-idx="${optIdx}"
-            class="option-btn w-full text-left p-4 rounded-xl flex items-start gap-3.5 cursor-pointer ${extraClass}">
-            <span class="w-7 h-7 rounded-lg border flex items-center justify-center font-mono text-xs font-bold shrink-0 mt-0.5 ${badgeClass}">
+            class="option-btn w-full text-left p-3.5 sm:p-4 rounded-xl flex items-start gap-3 cursor-pointer ${extraClass}">
+            <span class="w-6 h-6 rounded-md border flex items-center justify-center font-mono text-xs font-bold shrink-0 mt-0.5" style="${badgeStyle}">
               ${letters[optIdx] || optIdx + 1}
             </span>
-            <span class="text-sm sm:text-base text-slate-100 leading-relaxed">${escapeHtml(optText)}</span>
+            <span class="text-sm sm:text-[15px] leading-relaxed flex-1">${escapeHtml(optText)}</span>
+            ${statusTag}
           </button>
         `;
       }).join('');
@@ -1886,7 +2072,7 @@
         });
       });
 
-      // Explanation box (only in Study Mode once answered)
+      // Explanation box (Study Mode only once answered)
       const expBox = document.getElementById('q-explanation-box');
       if (hasAnswered && sessionState.mode === 'study') {
         expBox.classList.remove('hidden');
@@ -1898,15 +2084,11 @@
       // Prev / Next state
       document.getElementById('prev-q-btn').disabled = idx === 0;
       const nextBtn = document.getElementById('next-q-btn');
-      nextBtn.textContent = idx === total - 1 ? 'Finish & Score →' : 'Next →';
-
-      const answeredCount = Object.keys(sessionState.answers).length;
-      document.getElementById('answered-status-text').textContent = `${answeredCount} / ${total} Answered`;
+      nextBtn.textContent = idx === total - 1 ? 'Finish →' : 'Next →';
     }
 
     function selectOption(optIdx) {
       const idx = sessionState.currentIndex;
-      // In study mode, lock answer once selected so user can read rationale; in exam simulation, allow changing answer freely
       if (sessionState.mode === 'study' && sessionState.answers[idx] !== undefined) {
         return;
       }
@@ -1917,9 +2099,8 @@
 
     function renderNavigatorGrid() {
       const grid = document.getElementById('question-nav-grid');
-      const total = sessionState.questions.length;
       const flaggedCount = Object.keys(sessionState.flagged).filter(k => sessionState.flagged[k]).length;
-      document.getElementById('flagged-count-label').textContent = `${flaggedCount} Flagged`;
+      document.getElementById('flagged-count-label').textContent = `${flaggedCount} flagged`;
 
       grid.innerHTML = sessionState.questions.map((q, i) => {
         const isCurrent = i === sessionState.currentIndex;
@@ -1927,25 +2108,25 @@
         const isAnswered = ans !== undefined;
         const isFlagged = Boolean(sessionState.flagged[i]);
 
-        let cls = 'bg-slate-900/90 text-slate-400 border-slate-800 hover:border-slate-600';
+        let style = 'background-color: var(--bg-recessed); color: var(--text-secondary); border-color: var(--border-subtle);';
         if (isAnswered) {
           if (sessionState.mode === 'study') {
-            cls = ans === q.answer
-              ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
-              : 'bg-rose-500/20 text-rose-300 border-rose-500/40';
+            style = ans === q.answer
+              ? 'background-color: var(--correct-soft); color: var(--correct); border-color: var(--correct);'
+              : 'background-color: var(--incorrect-soft); color: var(--incorrect); border-color: var(--incorrect);';
           } else {
-            cls = 'bg-indigo-500/25 text-indigo-200 border-indigo-400/50';
+            style = 'background-color: var(--accent-soft); color: var(--accent); border-color: var(--accent);';
           }
         }
         if (isCurrent) {
-          cls += ' ring-2 ring-cyan-400 text-white font-extrabold';
+          style += ' outline: 2px solid var(--accent); font-weight: 800;';
         }
 
         return `
-          <button type="button" data-nav-idx="${i}"
-            class="relative h-9 rounded-lg border font-mono text-xs font-semibold flex items-center justify-center transition cursor-pointer ${cls}">
+          <button type="button" data-nav-idx="${i}" style="${style}"
+            class="relative h-8 rounded-lg border font-mono text-xs font-semibold flex items-center justify-center cursor-pointer">
             ${i + 1}
-            ${isFlagged ? '<span class="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-amber-400 border border-slate-950"></span>' : ''}
+            ${isFlagged ? '<span class="absolute -top-1 -right-1 w-2 h-2 rounded-full" style="background-color: var(--accent);"></span>' : ''}
           </button>
         `;
       }).join('');
@@ -1953,6 +2134,7 @@
       grid.querySelectorAll('button[data-nav-idx]').forEach(btn => {
         btn.addEventListener('click', () => {
           sessionState.currentIndex = Number(btn.getAttribute('data-nav-idx'));
+          document.getElementById('navigator-popover').classList.add('hidden');
           renderCurrentQuestion();
           renderNavigatorGrid();
         });
@@ -1965,6 +2147,9 @@
         clearInterval(sessionState.timerInterval);
       }
       sessionState.active = false;
+      sessionState.elapsedSeconds = sessionState.startTime
+        ? Math.max(1, Math.round((Date.now() - sessionState.startTime) / 1000))
+        : 0;
 
       const total = sessionState.questions.length;
       let correct = 0;
@@ -1994,51 +2179,51 @@
       const passBadge = document.getElementById('result-pass-badge');
       if (passed) {
         passBadge.textContent = 'PASSING STANDARD MET (≥ 450)';
-        passBadge.className = 'px-3 py-1 rounded-full text-xs font-mono font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-400/40';
+        passBadge.style.backgroundColor = 'var(--correct-soft)';
+        passBadge.style.color = 'var(--correct)';
+        passBadge.style.borderColor = 'var(--correct)';
       } else {
-        passBadge.textContent = 'BELOW PASSING MARK (< 450) — TARGET WEAK DOMAINS';
-        passBadge.className = 'px-3 py-1 rounded-full text-xs font-mono font-bold bg-rose-500/20 text-rose-300 border border-rose-400/40';
+        passBadge.textContent = 'BELOW PASSING MARK (< 450)';
+        passBadge.style.backgroundColor = 'var(--incorrect-soft)';
+        passBadge.style.color = 'var(--incorrect)';
+        passBadge.style.borderColor = 'var(--incorrect)';
       }
 
       document.getElementById('scaled-score-value').textContent = scaledScore;
-      document.getElementById('scaled-score-value').className = `text-5xl sm:text-6xl font-extrabold font-mono ${passed ? 'text-emerald-300' : 'text-amber-300'}`;
       document.getElementById('raw-score-text').textContent = `${correct} / ${total} (${Math.round(accuracy * 100)}%)`;
-      document.getElementById('scaled-score-bar').style.width = `${Math.round(accuracy * 100)}%`;
+      document.getElementById('result-time-taken').textContent = formatDuration(sessionState.elapsedSeconds);
 
       const missedCount = total - correct;
       document.getElementById('missed-btn-count').textContent = missedCount;
-      document.getElementById('retake-missed-btn').disabled = missedCount === 0;
-      if (missedCount === 0) {
-        document.getElementById('retake-missed-btn').classList.add('opacity-40');
-      } else {
-        document.getElementById('retake-missed-btn').classList.remove('opacity-40');
-      }
+      const retakeBtn = document.getElementById('retake-missed-btn');
+      retakeBtn.disabled = missedCount === 0;
+      retakeBtn.classList.toggle('opacity-40', missedCount === 0);
 
-      // Render Domain Mastery Bars
+      // Render 5-Domain Breakdown Bars
       const domainList = document.getElementById('domain-results-list');
       domainList.innerHTML = Object.values(DOMAINS).map(dom => {
         const st = domainStats[dom.id];
         if (st.total === 0) {
           return `
-            <div class="space-y-1.5 opacity-50">
-              <div class="flex justify-between text-xs font-mono">
-                <span>${dom.short} • ${dom.name} (${dom.pct})</span>
-                <span>Not Tested in Session</span>
+            <div class="space-y-1 opacity-50">
+              <div class="flex justify-between text-xs font-mono" style="color: var(--text-secondary);">
+                <span>${dom.short} • ${dom.name}</span>
+                <span>Not in session</span>
               </div>
-              <div class="w-full h-2 rounded-full bg-slate-900"></div>
+              <div class="w-full h-2 rounded-full" style="background-color: var(--bg-recessed);"></div>
             </div>
           `;
         }
         const pct = Math.round((st.correct / st.total) * 100);
-        const barColor = pct >= 75 ? 'bg-emerald-400' : pct >= 60 ? 'bg-amber-400' : 'bg-rose-400';
+        const fillColor = pct >= 65 ? 'var(--correct)' : 'var(--incorrect)';
         return `
           <div class="space-y-1.5">
-            <div class="flex flex-wrap justify-between text-xs sm:text-sm font-mono gap-2">
-              <span class="text-slate-200 font-semibold">${dom.short} • ${dom.name} <span class="text-slate-400">(${dom.pct} weight)</span></span>
-              <span class="text-white font-bold">${st.correct}/${st.total} (${pct}%)</span>
+            <div class="flex justify-between text-xs font-mono gap-2">
+              <span class="font-semibold" style="color: var(--text-primary);">${dom.short} • ${dom.name}</span>
+              <span style="color: var(--text-secondary);">${st.correct}/${st.total} (${pct}%)</span>
             </div>
-            <div class="w-full h-2.5 rounded-full bg-slate-900 overflow-hidden border border-slate-800">
-              <div class="h-full ${barColor} transition-all duration-500" style="width: ${pct}%"></div>
+            <div class="w-full h-2 rounded-full overflow-hidden" style="background-color: var(--bg-recessed);">
+              <div class="h-full transition-all duration-500" style="width: ${pct}%; background-color: ${fillColor};"></div>
             </div>
           </div>
         `;
@@ -2051,9 +2236,8 @@
       sessionState.reviewFilter = filter;
       document.querySelectorAll('.review-filter-btn').forEach(btn => {
         const active = btn.getAttribute('data-review-filter') === filter;
-        btn.className = active
-          ? 'review-filter-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-cyan-500/20 text-cyan-300 border border-cyan-400/40 cursor-pointer'
-          : 'review-filter-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300 border border-slate-700 cursor-pointer';
+        btn.style.backgroundColor = active ? 'var(--accent)' : 'var(--bg-recessed)';
+        btn.style.color = active ? 'var(--accent-fg)' : 'var(--text-secondary)';
       });
 
       const letters = ['A', 'B', 'C', 'D', 'E'];
@@ -2073,7 +2257,7 @@
 
       const container = document.getElementById('detailed-review-list');
       if (!items.length) {
-        container.innerHTML = `<div class="text-sm text-slate-400 py-6 text-center">No questions match the selected "${filter}" filter.</div>`;
+        container.innerHTML = `<div class="text-sm py-6 text-center" style="color: var(--text-secondary);">No questions match the "${filter}" filter.</div>`;
         return;
       }
 
@@ -2081,33 +2265,31 @@
         const dom = DOMAINS[q.domain] || DOMAINS[1];
         const userLabel = userAns !== undefined
           ? `${letters[userAns]}. ${escapeHtml(q.options[userAns])}`
-          : 'Unanswered';
+          : 'Skipped / Unanswered';
         const correctLabel = `${letters[q.answer]}. ${escapeHtml(q.options[q.answer])}`;
+        const statusColor = isCorrect ? 'var(--correct)' : 'var(--incorrect)';
 
         return `
-          <div class="rounded-xl p-4 sm:p-5 bg-slate-900/80 border ${isCorrect ? 'border-emerald-500/25' : 'border-rose-500/35'} space-y-3">
-            <div class="flex flex-wrap items-center justify-between gap-2">
-              <div class="flex items-center gap-2 flex-wrap">
-                <span class="px-2 py-0.5 rounded text-xs font-mono font-bold ${isCorrect ? 'bg-emerald-500/20 text-emerald-300' : 'bg-rose-500/20 text-rose-300'}">
-                  Q${idx + 1} • ${isCorrect ? 'CORRECT' : 'MISSED'}
-                </span>
-                <span class="text-xs font-mono text-indigo-300">${dom.short} • ${dom.name}</span>
-                ${isFlagged ? '<span class="px-2 py-0.5 rounded text-[11px] font-mono bg-amber-500/20 text-amber-300">FLAGGED</span>' : ''}
-              </div>
+          <div class="rounded-xl p-4 sm:p-5 space-y-3 border" style="background-color: var(--bg-recessed); border-color: ${statusColor};">
+            <div class="flex flex-wrap items-center justify-between gap-2 text-xs font-mono">
+              <span class="font-bold" style="color: ${statusColor};">
+                Q${idx + 1} • ${isCorrect ? '✓ CORRECT' : '✕ MISSED'}
+              </span>
+              <span style="color: var(--text-secondary);">${dom.short} • ${dom.name}${isFlagged ? ' • ★ FLAGGED' : ''}</span>
             </div>
-            <p class="text-sm sm:text-base font-medium text-white">${escapeHtml(q.question)}</p>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-2.5 text-xs sm:text-sm">
-              <div class="p-3 rounded-lg bg-slate-950/70 border ${isCorrect ? 'border-emerald-500/30 text-emerald-200' : 'border-rose-500/30 text-rose-200'}">
-                <span class="font-mono text-[11px] uppercase block opacity-75 mb-0.5">Your Answer</span>
+            <p class="text-sm sm:text-[15px] font-medium leading-relaxed" style="color: var(--text-primary);">${escapeHtml(q.question)}</p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs sm:text-sm">
+              <div class="p-3 rounded-lg border" style="background-color: var(--bg-card); border-color: var(--border-subtle); color: var(--text-primary);">
+                <span class="font-mono text-[11px] uppercase block mb-0.5" style="color: var(--text-secondary);">Your Answer</span>
                 ${userLabel}
               </div>
-              <div class="p-3 rounded-lg bg-slate-950/70 border border-emerald-500/30 text-emerald-200">
-                <span class="font-mono text-[11px] uppercase block opacity-75 mb-0.5">Correct ISACA Answer</span>
+              <div class="p-3 rounded-lg border" style="background-color: var(--bg-card); border-color: var(--correct); color: var(--text-primary);">
+                <span class="font-mono text-[11px] uppercase block mb-0.5" style="color: var(--correct);">Correct Answer</span>
                 ${correctLabel}
               </div>
             </div>
-            <div class="text-xs sm:text-sm text-slate-300 bg-slate-950/50 p-3 rounded-lg border border-slate-800">
-              <strong class="text-cyan-300 font-mono">Rationale:</strong> ${escapeHtml(q.explanation)}
+            <div class="text-xs sm:text-sm leading-relaxed" style="color: var(--text-secondary);">
+              <strong style="color: var(--text-primary);">Rationale:</strong> ${escapeHtml(q.explanation)}
             </div>
           </div>
         `;
@@ -2179,19 +2361,24 @@
       a.click();
       a.remove();
       URL.revokeObjectURL(url);
-      showToast(`Exported ${all.length} questions as JSON.`, 'success');
+      showToast(`Exported ${all.length} questions as JSON.`);
     }
 
     // Event Wiring
     document.addEventListener('DOMContentLoaded', () => {
+      initTheme();
       loadCustomBank();
       refreshBankUI();
 
-      // Setup Filters
-      ['cfg-domain', 'cfg-source'].forEach(id => {
-        document.getElementById(id).addEventListener('change', updateMatchingPoolCount);
+      // 3-Mode Theme Switcher Buttons
+      document.querySelectorAll('[data-theme-choice]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          applyTheme(btn.getAttribute('data-theme-choice'));
+        });
       });
 
+      // Setup Domain Filter
+      document.getElementById('cfg-domain').addEventListener('change', updateMatchingPoolCount);
       document.getElementById('start-quiz-btn').addEventListener('click', () => startQuizSession());
 
       // Importer Modal Open/Close
@@ -2206,7 +2393,7 @@
       };
 
       document.getElementById('open-importer-btn').addEventListener('click', openModal);
-      document.getElementById('quick-drop-cta').addEventListener('click', openModal);
+      document.getElementById('secondary-import-link').addEventListener('click', openModal);
       document.getElementById('close-importer-btn').addEventListener('click', closeModal);
       modal.addEventListener('click', (e) => {
         if (e.target === modal) closeModal();
@@ -2219,15 +2406,19 @@
       const panelPaste = document.getElementById('panel-raw-paste');
 
       tabPdf.addEventListener('click', () => {
-        tabPdf.className = 'px-4 py-2.5 text-xs sm:text-sm font-bold border-b-2 border-cyan-400 text-cyan-300 cursor-pointer';
-        tabPaste.className = 'px-4 py-2.5 text-xs sm:text-sm font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-200 cursor-pointer';
+        tabPdf.style.borderColor = 'var(--accent)';
+        tabPdf.style.color = 'var(--accent)';
+        tabPaste.style.borderColor = 'transparent';
+        tabPaste.style.color = 'var(--text-secondary)';
         panelPdf.classList.remove('hidden');
         panelPaste.classList.add('hidden');
       });
 
       tabPaste.addEventListener('click', () => {
-        tabPaste.className = 'px-4 py-2.5 text-xs sm:text-sm font-bold border-b-2 border-cyan-400 text-cyan-300 cursor-pointer';
-        tabPdf.className = 'px-4 py-2.5 text-xs sm:text-sm font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-200 cursor-pointer';
+        tabPaste.style.borderColor = 'var(--accent)';
+        tabPaste.style.color = 'var(--accent)';
+        tabPdf.style.borderColor = 'transparent';
+        tabPdf.style.color = 'var(--text-secondary)';
         panelPaste.classList.remove('hidden');
         panelPdf.classList.add('hidden');
       });
@@ -2241,14 +2432,14 @@
 
       dropZone.addEventListener('dragover', (e) => {
         e.preventDefault();
-        dropZone.classList.add('border-cyan-400', 'bg-cyan-500/10');
+        dropZone.style.borderColor = 'var(--accent)';
       });
       dropZone.addEventListener('dragleave', () => {
-        dropZone.classList.remove('border-cyan-400', 'bg-cyan-500/10');
+        dropZone.style.borderColor = 'var(--border-strong)';
       });
       dropZone.addEventListener('drop', (e) => {
         e.preventDefault();
-        dropZone.classList.remove('border-cyan-400', 'bg-cyan-500/10');
+        dropZone.style.borderColor = 'var(--border-strong)';
         if (e.dataTransfer && e.dataTransfer.files) {
           handleFilesUpload(e.dataTransfer.files);
         }
@@ -2258,7 +2449,7 @@
       document.getElementById('parse-paste-btn').addEventListener('click', () => {
         const raw = document.getElementById('raw-paste-input').value.trim();
         if (!raw) {
-          showToast('Paste question text or JSON first.', 'warning');
+          showToast('Paste question text or JSON first.');
           return;
         }
         try {
@@ -2283,22 +2474,23 @@
           }
 
           if (!parsed.length) {
-            showToast('Could not detect valid CISA questions in pasted text.', 'error');
+            showToast('Could not detect valid CISA questions in pasted text.');
             return;
           }
-          const { added, duplicates } = mergeNewQuestions(parsed);
+          const { added, duplicates, domainAdds } = mergeNewQuestions(parsed);
           document.getElementById('raw-paste-input').value = '';
-          showToast(`Added ${added} new question(s) (${duplicates} duplicates skipped).`, 'success');
+          const domBreakdown = [1, 2, 3, 4, 5].map(d => `D${d}:${domainAdds[d]}`).join(' ');
+          showToast(`Added ${added} new question(s) (${domBreakdown}) • ${duplicates} dupes skipped.`);
         } catch (err) {
-          showToast(`Parse error: ${err.message}`, 'error');
+          showToast(`Parse error: ${err.message}`);
         }
       });
 
-      // Export & Clear Imported Controls
+      // Export & Reset to Built-In Bank Controls
       document.getElementById('export-bank-btn').addEventListener('click', exportFullBankJson);
       document.getElementById('clear-imported-btn').addEventListener('click', () => {
         if (!customQuestions.length) {
-          showToast('No imported questions to clear.', 'info');
+          showToast('Already using the 35 built-in starter questions.');
           return;
         }
         document.getElementById('clear-confirm-banner').classList.remove('hidden');
@@ -2311,7 +2503,20 @@
         localStorage.removeItem(STORAGE_KEY);
         document.getElementById('clear-confirm-banner').classList.add('hidden');
         refreshBankUI();
-        showToast('Cleared all imported questions. 30 starter questions retained.', 'info');
+        showToast('Reset complete: 35 built-in starter questions active.');
+      });
+
+      // Navigator Popover Toggle & Outside Click Close
+      const navToggleBtn = document.getElementById('navigator-toggle-btn');
+      const navPopover = document.getElementById('navigator-popover');
+      navToggleBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        navPopover.classList.toggle('hidden');
+      });
+      document.addEventListener('click', (e) => {
+        if (!navPopover.classList.contains('hidden') && !navPopover.contains(e.target) && e.target !== navToggleBtn) {
+          navPopover.classList.add('hidden');
+        }
       });
 
       // Quiz Navigation & Controls
@@ -2323,7 +2528,7 @@
         }
       });
 
-      document.getElementById('next-q-btn').addEventListener('click', () => {
+      const advanceQuestion = () => {
         if (sessionState.currentIndex < sessionState.questions.length - 1) {
           sessionState.currentIndex++;
           renderCurrentQuestion();
@@ -2331,7 +2536,10 @@
         } else {
           finishExam();
         }
-      });
+      };
+
+      document.getElementById('skip-q-btn').addEventListener('click', advanceQuestion);
+      document.getElementById('next-q-btn').addEventListener('click', advanceQuestion);
 
       document.getElementById('flag-question-btn').addEventListener('click', () => {
         const idx = sessionState.currentIndex;
@@ -2340,21 +2548,7 @@
         renderNavigatorGrid();
       });
 
-      document.getElementById('toggle-highlight-live').addEventListener('click', () => {
-        sessionState.highlight = !sessionState.highlight;
-        document.getElementById('toggle-highlight-live').textContent = `Qualifiers: ${sessionState.highlight ? 'ON' : 'OFF'}`;
-        renderCurrentQuestion();
-      });
-
       document.getElementById('finish-exam-btn').addEventListener('click', finishExam);
-
-      document.getElementById('quit-session-btn').addEventListener('click', () => {
-        if (sessionState.timerInterval) clearInterval(sessionState.timerInterval);
-        sessionState.active = false;
-        document.getElementById('quiz-view').classList.add('hidden');
-        document.getElementById('setup-view').classList.remove('hidden');
-        refreshBankUI();
-      });
 
       // Results Actions
       document.getElementById('new-session-btn').addEventListener('click', () => {
@@ -2367,6 +2561,11 @@
         const missed = sessionState.questions.filter((q, idx) => sessionState.answers[idx] !== q.answer);
         if (!missed.length) return;
         startQuizSession(missed);
+      });
+
+      document.getElementById('toggle-review-btn').addEventListener('click', () => {
+        const reviewCard = document.getElementById('detailed-review-card');
+        reviewCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
       });
 
       document.getElementById('download-guide-btn').addEventListener('click', downloadStudyGuide);
@@ -2392,13 +2591,11 @@
           const q = sessionState.questions[sessionState.currentIndex];
           if (q && idx < q.options.length) selectOption(idx);
         } else if (e.key === 'ArrowRight') {
-          document.getElementById('next-q-btn').click();
+          advanceQuestion();
         } else if (e.key === 'ArrowLeft') {
           document.getElementById('prev-q-btn').click();
         } else if (key === 'F') {
           document.getElementById('flag-question-btn').click();
-        } else if (key === 'H') {
-          document.getElementById('toggle-highlight-live').click();
         }
       });
     });
